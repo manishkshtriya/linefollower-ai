@@ -47,6 +47,7 @@ h2{font:600 clamp(32px,5vw,48px)/1.05 var(--display);text-transform:uppercase;ma
 .stat div b{display:block;font:500 18px var(--mono);font-variant-numeric:tabular-nums}
 .status{position:absolute;right:12px;top:12px;font:500 12px var(--mono);padding:5px 10px;border-radius:2em;background:color-mix(in srgb,var(--panel) 88%,transparent);border:1px solid var(--line);color:var(--ok)}
 .status.warn{color:var(--led)}
+.err{position:absolute;inset:90px 16px auto 16px;margin:auto;max-width:520px;padding:14px 16px;border:1px solid var(--led);border-radius:10px;background:var(--panel);color:var(--fg);font:13px/1.5 var(--mono)}
 .hint{position:absolute;right:12px;bottom:10px;font:12px var(--mono);color:var(--muted);pointer-events:none}
 .ctl{display:flex;gap:20px 28px;flex-wrap:wrap;align-items:flex-end;margin-top:14px}
 .ctl .grp{display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -103,6 +104,7 @@ footer a{color:var(--accent)}
           <div class="mot" style="margin-top:5px"><span>R</span><div class="bar"><span id="br"></span></div><span id="tr">0</span></div></div>
         <div class="stat"><div><span class="lab">Laps</span><b id="laps">0</b></div><div><span class="lab">Lost line</span><b id="lost">0</b></div></div>
       </div>
+      <div class="err" id="err" hidden></div>
       <div class="status" id="status">Following the line</div>
       <div class="hint">Drag to orbit · scroll to zoom</div>
     </div>
@@ -178,8 +180,12 @@ footer a{color:var(--accent)}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>if(!window.THREE){document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>');}</script>
 <script>
+function showErr(m){var e=document.getElementById("err");if(e){e.hidden=false;e.textContent="The 3D view could not start: "+m+". Try another browser, or turn on hardware acceleration."}}
+window.addEventListener("error",function(ev){showErr(ev.message)});
 (function(){
+if(!window.THREE){showErr("the 3D library did not load");return;}
 const NET = {"W": [[[-0.64361, 0.62476, -0.96239, 1.00675], [-0.08379, 0.61366, 0.53967, 1.52688], [0.08018, -1.34756, -0.0544, 0.02836], [0.40855, -0.10555, -1.01903, -0.5941], [-1.32457, -0.3806, -1.00059, -0.29121], [0.46194, 0.18022, 0.37132, 0.97443], [1.01632, 0.77425, -0.56859, -0.12905]], [[-0.20116, 1.25305, -0.33164, -0.03012, -0.38946, 0.90369, 0.77624], [1.2299, -0.03181, 0.4344, -0.84829, -0.11707, 0.0725, -0.18558], [0.84448, 0.33216, -0.2798, -0.16613, -0.29442, 0.59209, -0.51671], [0.70277, 0.50131, 1.149, -0.51029, 1.08459, -0.67185, -1.03984], [0.46614, 0.09759, 0.64227, 0.0786, 0.11427, -0.99369, -0.14068], [0.13288, 1.40918, -0.93017, -2.00334, 0.76727, 0.2414, 0.12723], [0.17058, -0.7498, -0.3113, 0.90278, -0.19591, -0.4851, 0.7518]], [[1.40134, 0.01833, 1.78229, 1.83653, 0.22284, -0.33953, -0.94201], [1.05844, -0.74125, -0.09615, -0.84488, -0.50882, -1.02473, 0.9863]]], "b": [[-0.36335, -0.12098, 0.23133, -0.10708, 0.52748, 0.14805, -0.24576], [0.28373, -0.45038, 0.20718, -0.34562, -0.30193, -0.21284, 0.38157], [0.33767, 0.41952]]};
 const $ = id => document.getElementById(id);
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
