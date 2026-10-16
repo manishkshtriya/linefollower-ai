@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Line Follower Lab</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a test bench. One large stage where two cars race on the same tape, a control rack on the right, one-click experiments below. Deliberately dark, like a lab bench under a lamp: one look, no theme switch. */
+:root{
+  --bench:#0c1118; --panel:#141b25; --panel2:#1a2330; --line:#263243; --fg:#e7edf5; --muted:#8a9bb1;
+  --old:#ff9f43; --new:#3fd7f2; --good:#4ade80; --bad:#ff5d5d; --tape:#0a0d12; --floor:#dfe5ec;
+  --display:'Barlow Condensed','Arial Narrow',sans-serif; --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bench);color:var(--fg);font:15px/1.5 var(--sans);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:22px 48px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.eyebrow{font:500 12px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--new);margin:0 0 4px}
+h1{font:700 clamp(34px,5.5vw,58px)/.95 var(--display);text-transform:uppercase;margin:0;letter-spacing:.01em}
+.sub{color:var(--muted);margin:6px 0 0;max-width:68ch}
+.legend{display:flex;gap:16px;font:500 13px var(--mono)}
+.legend span{display:flex;align-items:center;gap:8px}
+.legend i{width:14px;height:14px;border-radius:3px;display:block}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;align-items:start}
+@media(max-width:980px){.grid{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+#view{display:block;width:100%;aspect-ratio:19/12;max-width:100%;touch-action:none;background:var(--floor)}
+#view.draw{cursor:crosshair}
+.banner{position:absolute;left:50%;top:14px;transform:translateX(-50%);font:600 13px var(--mono);padding:6px 14px;border-radius:2em;background:rgba(12,17,24,.85);border:1px solid var(--line);color:var(--fg);pointer-events:none;white-space:nowrap}
+.rack{display:flex;flex-direction:column;gap:12px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.box h2{font:600 13px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.field label{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.field label b{color:var(--fg);font:600 13px var(--mono)}
+input[type=range]{width:100%;accent-color:var(--new)}
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1 1 auto;font:500 13px var(--sans);padding:7px 8px;border:0;background:var(--panel2);color:var(--fg);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--new);color:#05222a;font-weight:600}
+button:focus-visible,input:focus-visible{outline:2px solid var(--new);outline-offset:2px}
+.cars{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.car{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;border-top:3px solid var(--c)}
+.car .nm{font:600 12px var(--mono);color:var(--c);letter-spacing:.06em;text-transform:uppercase}
+.car .big{display:flex;gap:14px;margin:6px 0}
+.car .big div b{display:block;font:700 30px/1 var(--display);font-variant-numeric:tabular-nums}
+.car .big div span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.bits{display:flex;gap:4px;margin:6px 0}
+.bits i{flex:1;height:10px;border-radius:3px;background:#2a3546}
+.bits i.on{background:#ff3b30;box-shadow:0 0 8px #ff3b30}
+.pwm{display:grid;grid-template-columns:12px 1fr;gap:6px;align-items:center;font:11px var(--mono);color:var(--muted);margin-top:3px}
+.pwm div{height:6px;background:#2a3546;border-radius:3px;overflow:hidden}
+.pwm div span{display:block;height:100%;background:var(--c);width:0}
+.st{font:600 11px var(--mono);margin-top:8px;color:var(--good)}
+.st.bad{color:var(--bad)}
+.verdict{font:600 15px var(--sans);margin-top:10px;padding:10px 12px;border-radius:8px;background:var(--panel2);border:1px solid var(--line);min-height:44px}
+.exps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px}
+.exp{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;color:var(--fg);cursor:pointer;font:inherit;display:flex;flex-direction:column;gap:6px}
+.exp:hover{border-color:var(--new)}
+.exp b{font:600 20px/1.1 var(--display);text-transform:uppercase;letter-spacing:.02em}
+.exp span{color:var(--muted);font-size:13px}
+.exp em{font:500 11px var(--mono);font-style:normal;color:var(--new);letter-spacing:.1em;text-transform:uppercase}
+.row{display:flex;gap:8px}
+.row button{flex:1;font:600 13px var(--sans);padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);cursor:pointer}
+.row button.primary{background:var(--new);color:#05222a;border-color:var(--new)}
+footer{color:var(--muted);font:12px var(--mono)}
+footer a{color:var(--new)}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div>
+      <p class="eyebrow">AI line follower · live test bench</p>
+      <h1>Line Follower Lab</h1>
+      <p class="sub">Two copies of the car race on the same tape with the same motors. Only their 107 weights differ. Change the track, weaken a motor or move the sensors, and watch who survives.</p>
+    </div>
+    <div class="legend"><span><i style="background:var(--old)"></i>Before: copied a rule</span><span><i style="background:var(--new)"></i>After: learned in simulation</span></div>
+  </header>
+
+  <div class="grid">
+    <div class="stage">
+      <canvas id="view" aria-label="Track with two cars. In draw mode, drag to draw your own closed track."></canvas>
+      <div class="banner" id="banner">Both cars start on the line</div>
+    </div>
+
+    <div class="rack">
+      <div class="box">
+        <h2>Scoreboard</h2>
+        <div class="cars">
+          <div class="car" style="--c:var(--old)"><div class="nm">Before</div>
+            <div class="big"><div><b id="o_laps">0</b><span>laps</span></div><div><b id="o_fail">0</b><span>lost line</span></div></div>
+            <div class="bits" id="o_bits"><i></i><i></i><i></i><i></i></div>
+            <div class="pwm"><span>L</span><div><span id="o_l"></span></div></div><div class="pwm"><span>R</span><div><span id="o_r"></span></div></div>
+            <div class="st" id="o_st">driving</div></div>
+          <div class="car" style="--c:var(--new)"><div class="nm">After</div>
+            <div class="big"><div><b id="n_laps">0</b><span>laps</span></div><div><b id="n_fail">0</b><span>lost line</span></div></div>
+            <div class="bits" id="n_bits"><i></i><i></i><i></i><i></i></div>
+            <div class="pwm"><span>L</span><div><span id="n_l"></span></div></div><div class="pwm"><span>R</span><div><span id="n_r"></span></div></div>
+            <div class="st" id="n_st">driving</div></div>
+        </div>
+        <div class="verdict" id="verdict">Pick an experiment below, or set your own.</div>
+      </div>
+
+      <div class="box">
+        <h2>Track</h2>
+        <div class="field"><div class="seg" id="shapeSeg">
+          <button type="button" data-v="oval" aria-pressed="true">Oval</button>
+          <button type="button" data-v="lobe" aria-pressed="false">Three-lobe</button>
+          <button type="button" data-v="peanut" aria-pressed="false">Peanut</button>
+          <button type="button" data-v="draw" aria-pressed="false">Draw</button></div></div>
+        <div class="field"><div class="seg" id="styleSeg">
+          <button type="button" data-v="mixed" aria-pressed="true">Mixed</button>
+          <button type="button" data-v="solid" aria-pressed="false">Solid</button>
+          <button type="button" data-v="dashed" aria-pressed="false">Dashed</button>
+          <button type="button" data-v="dotted" aria-pressed="false">Dotted</button></div></div>
+        <div class="field"><label for="gap">Gap between marks <b id="gapV">81 mm</b></label><input id="gap" type="range" min="40" max="190" step="1" value="81"></div>
+      </div>
+
+      <div class="box">
+        <h2>Car</h2>
+        <div class="field"><label for="sp">Sensor spacing <b id="spV">20 mm</b></label><input id="sp" type="range" min="12" max="34" step="1" value="20"></div>
+        <div class="field"><label for="mr">Right motor strength <b id="mrV">100%</b></label><input id="mr" type="range" min="80" max="110" step="1" value="100"></div>
+        <div class="field"><label for="nz">Wrong sensor reads <b id="nzV">0%</b></label><input id="nz" type="range" min="0" max="5" step="0.5" value="0"></div>
+        <div class="field"><label>Speed</label><div class="seg" id="spdSeg">
+          <button type="button" data-v="1" aria-pressed="true">1×</button><button type="button" data-v="2" aria-pressed="false">2×</button><button type="button" data-v="4" aria-pressed="false">4×</button></div></div>
+        <div class="row"><button type="button" id="restart" class="primary">Restart race</button><button type="button" id="pause">Pause</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="exps" id="exps">
+    <button class="exp" type="button" data-e="0"><em>Experiment 1</em><b>The failure</b><span>Dotted tape, right motor 8% weaker, sensors 30 mm apart. The old car keeps losing the line.</span></button>
+    <button class="exp" type="button" data-e="1"><em>Experiment 2</em><b>Fix the hardware</b><span>Same weak motor, sensors moved to 20 mm. Watch what the spacing alone fixes.</span></button>
+    <button class="exp" type="button" data-e="2"><em>Experiment 3</em><b>A track it never saw</b><span>Peanut-shaped dashed track, weak motor and noisy sensors. The learned car was never trained on this shape.</span></button>
+    <button class="exp" type="button" data-e="3"><em>Experiment 4</em><b>Your own track</b><span>Draw any closed loop with your mouse or finger and race them on it.</span></button>
+  </div>
+
+  <footer>Simulation of the real firmware's control loop (5 ms steps, PWM 70 + out × 185, stop after 3 s without the line), motor stall and lag, 8 mm sensor spots on 19 mm tape. Not the real car yet. Code: <a href="https://github.com/manishkshtriya/linefollower-ai" target="_blank" rel="noopener">github.com/manishkshtriya/linefollower-ai</a></footer>
+</div>
+
+<script>
+(function(){
+const WTS = {"old": [-0.64361, 0.62476, -0.96239, 1.00675, -0.08379, 0.61366, 0.53967, 1.52688, 0.08018, -1.34756, -0.0544, 0.02836, 0.40855, -0.10555, -1.01903, -0.5941, -1.32457, -0.3806, -1.00059, -0.29121, 0.46194, 0.18022, 0.37132, 0.97442, 1.01632, 0.77425, -0.56859, -0.12905, -0.36335, -0.12098, 0.23133, -0.10708, 0.52748, 0.14805, -0.24576, -0.20116, 1.25305, -0.33164, -0.03012, -0.38946, 0.90369, 0.77624, 1.2299, -0.03181, 0.4344, -0.84829, -0.11707, 0.0725, -0.18557, 0.84448, 0.33216, -0.2798, -0.16613, -0.29442, 0.59209, -0.51671, 0.70278, 0.50131, 1.149, -0.51029, 1.08459, -0.67185, -1.03984, 0.46614, 0.09759, 0.64227, 0.0786, 0.11427, -0.99369, -0.14068, 0.13288, 1.40918, -0.93017, -2.00334, 0.76727, 0.2414, 0.12723, 0.17058, -0.74979, -0.3113, 0.90278, -0.19591, -0.4851, 0.7518, 0.28373, -0.45038, 0.20718, -0.34562, -0.30193, -0.21284, 0.38157, 1.40134, 0.01833, 1.78229, 1.83653, 0.22284, -0.33953, -0.94201, 1.05844, -0.74125, -0.09615, -0.84488, -0.50882, -1.02473, 0.9863, 0.33768, 0.41952], "new": [-0.74038, 0.30995, -0.92329, 1.04408, -0.41492, 0.41426, 0.80285, 1.76, 0.11344, -1.36056, 0.18754, 0.33595, 0.40525, 0.36212, -1.23228, -0.90619, -1.41012, -0.32647, -1.0526, -0.29734, 0.11043, 0.17771, 0.04985, 1.00837, 1.11335, 0.74755, -0.50371, -0.35368, -0.38072, 0.12643, 0.50704, 0.22631, 0.37242, 0.4629, -0.46085, -0.67378, 1.13518, -0.11845, 0.00956, -0.1248, 1.03809, 0.67194, 1.45763, 0.22863, 0.42333, -0.74912, -0.01566, -0.37724, -0.04336, 0.92848, 0.41188, -0.33994, -0.09565, 0.02608, 0.47151, -0.75368, 0.59866, 0.80437, 0.97713, -0.5638, 1.13334, -0.77199, -0.8475, 0.33327, 0.63902, 0.72214, 0.22805, 0.07349, -1.26, -0.16776, 0.32547, 1.33907, -0.76662, -2.24475, 0.72861, -0.03432, 0.2685, 0.08327, -0.61172, -0.2845, 0.90106, -0.29019, -0.22685, 1.2493, 0.60411, -0.39742, 0.74219, -0.28755, -0.36412, -0.40915, 0.98512, 1.27256, 0.03564, 1.77207, 1.84295, 0.50534, -0.13257, -1.26477, 0.89367, -0.83265, 0.14096, -0.64129, -0.56735, -1.25984, 1.28592, 0.34134, 0.27437]};
+const $ = id => document.getElementById(id);
+const WW = 1900, WH = 1200, TAPE = 19, WHEELBASE = 81, AHEAD = 70, VMAX = 450, STALL = 60, TAU = 0.06;
+
+/* ---- network (same layout as learn.cpp: W1[7][4], b1, W2[7][7], b2, W3[2][7], b3) ---- */
+function makeNet(w){
+  return function(inp, out){
+    const h1 = new Float32Array(7), h2 = new Float32Array(7);
+    for (let j=0;j<7;j++){ let a=w[28+j]; for(let i=0;i<4;i++) a+=w[j*4+i]*inp[i]; h1[j]=Math.tanh(a); }
+    const o2=35; for (let j=0;j<7;j++){ let a=w[o2+49+j]; for(let i=0;i<7;i++) a+=w[o2+j*7+i]*h1[i]; h2[j]=Math.tanh(a); }
+    const o3=91; for (let j=0;j<2;j++){ let a=w[o3+14+j]; for(let i=0;i<7;i++) a+=w[o3+j*7+i]*h2[i]; out[j]=1/(1+Math.exp(-a)); }
+  };
+}
+const NETS = { old: makeNet(WTS.old), new: makeNet(WTS.new) };
+
+/* ---- track ---- */
+const tc = document.createElement('canvas'); tc.width = WW; tc.height = WH;
+const tx = tc.getContext('2d', { willReadFrequently: true });
+let path = null, mask = null, shape = 'oval', style = 'mixed', gap = 81, drawnPts = null;
+function shapePoints(kind){
+  const N = 4000, P = [];
+  for (let i=0;i<N;i++){
+    const t = 2*Math.PI*i/N; let x, y;
+    if (kind==='oval'){ x = 891*Math.cos(t); y = 520*Math.sin(t); }
+    else if (kind==='lobe'){ const r = 470*(1+0.18*Math.cos(3*t)); x = r*Math.cos(t)*1.25; y = r*Math.sin(t); }
+    else { const r = 420*(1+0.42*Math.cos(2*t)); x = r*Math.cos(t)*1.45; y = r*Math.sin(t)*1.25; }
+    P.push([x + WW/2, y + WH/2]);
+  }
+  return P;
+}
+function resample(P, step){
+  const out = [P[0]]; let carry = 0;
+  for (let i=1;i<=P.length;i++){
+    const a = P[i-1], b = P[i % P.length]; let d = Math.hypot(b[0]-a[0], b[1]-a[1]), t0 = 0;
+    while (carry + (d - t0) >= step){ const need = step - carry; t0 += need; const f = t0/d; out.push([a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f]); carry = 0; }
+    carry += d - t0;
+  }
+  return out;
+}
+function buildTrack(){
+  let P = shape==='draw' && drawnPts ? drawnPts : shapePoints(shape==='draw' ? 'oval' : shape);
+  P = resample(P, 2);
+  const n = P.length, s = new Float32Array(n);
+  for (let i=1;i<n;i++) s[i] = s[i-1] + Math.hypot(P[i][0]-P[i-1][0], P[i][1]-P[i-1][1]);
+  const L = s[n-1] + Math.hypot(P[0][0]-P[n-1][0], P[0][1]-P[n-1][1]);
+  path = { P, s, L, n };
+  tx.fillStyle = '#dfe5ec'; tx.fillRect(0,0,WW,WH);
+  tx.strokeStyle = '#cfd7e1'; tx.lineWidth = 1;
+  for (let x=0;x<=WW;x+=100){ tx.beginPath(); tx.moveTo(x,0); tx.lineTo(x,WH); tx.stroke(); }
+  for (let y=0;y<=WH;y+=100){ tx.beginPath(); tx.moveTo(0,y); tx.lineTo(WW,y); tx.stroke(); }
+  tx.fillStyle = '#0a0d12';
+  const segs = [[0,.2,'solid'],[.2,.42,'dashed'],[.42,.6,'solid'],[.6,.82,'dotted'],[.82,1.01,'solid']];
+  for (let i=0;i<n;i++){
+    const f = s[i]/L; let st = style;
+    if (st==='mixed'){ st='solid'; for (const g of segs) if (f>=g[0] && f<g[1]) { st=g[2]; break; } }
+    let on = true;
+    if (st==='dashed') on = (s[i] % (81+gap)) < 81; else if (st==='dotted') on = (s[i] % (TAPE+gap)) < TAPE;
+    if (on){ tx.beginPath(); tx.arc(P[i][0], P[i][1], TAPE/2, 0, 2*Math.PI); tx.fill(); }
+  }
+  const d = tx.getImageData(0,0,WW,WH).data; mask = new Uint8Array(WW*WH);
+  for (let i=0,j=0;i<mask.length;i++,j+=4) mask[i] = d[j] < 100 ? 1 : 0;
+}
+const tapeAt = (x,y) => { const ix = Math.round(x), iy = Math.round(y); return ix>=0 && iy>=0 && ix<WW && iy<WH && mask[iy*WW+ix] === 1; };
+
+/* ---- cars ---- */
+let spacing = 20, gainR = 1, noise = 0, speed = 1, paused = false;
+function newCar(kind){ return { kind, net: NETS[kind], trail: [], laps: 0, fails: 0, bits: [0,0,0,0], out: [0,0] }; }
+const cars = [newCar('old'), newCar('new')];
+function nearestIdx(c, around, win){
+  const P = path.P, n = path.n; let best = 1e18, bi = around;
+  for (let k=-win;k<=win;k++){ const i = ((around+k)%n+n)%n; const dx = P[i][0]-c.x, dy = P[i][1]-c.y, d = dx*dx+dy*dy; if (d<best){ best=d; bi=i; } }
+  return [bi, Math.sqrt(best)];
+}
+function place(c, idx){
+  const P = path.P, n = path.n;
+  for (let k=0;k<n;k++){ const i=(idx+k)%n; if (tapeAt(P[i][0],P[i][1])) { idx=i; break; } }
+  const a = P[idx], b = P[(idx+3)%n];
+  c.x = a[0]; c.y = a[1]; c.th = Math.atan2(b[1]-a[1], b[0]-a[0]);
+  c.vl = c.vr = 0; c.dl = c.dr = 0; c.t = 0; c.lastSeen = 0; c.idx = idx; c.prog = 0; c.frozen = 0; c.state = 'driving'; c.trail = [];
+}
+function resetRace(){ for (const c of cars){ c.laps = 0; c.fails = 0; place(c, 0); } }
+function fail(c, why){ c.fails++; c.state = why; c.frozen = 900; c.vl = c.vr = 0; c.dl = c.dr = 0; }
+function step(c){   // 1 ms
+  if (c.frozen > 0){ c.frozen--; if (c.frozen===0){ const keep = c.fails, kl = c.laps; place(c, (c.idx+20)%path.n); c.fails = keep; c.laps = kl; } return; }
+  if (c.t % 5 === 0){
+    const fx = Math.cos(c.th), fy = Math.sin(c.th), lx = Math.sin(c.th), ly = -Math.cos(c.th); let any = 0;
+    for (let i=0;i<4;i++){
+      const lat = (1.5-i)*spacing, px = c.x + fx*AHEAD + lx*lat, py = c.y + fy*AHEAD + ly*lat;
+      let hit = tapeAt(px,py) ? 1 : 0;
+      for (let k=0;k<8;k++){ const a = k*Math.PI/4; hit += tapeAt(px+4*Math.cos(a), py+4*Math.sin(a)) ? 1 : 0; }
+      let on = hit*2 >= 9; if (noise>0 && Math.random() < noise) on = !on;
+      c.bits[i] = on ? 1 : 0; any |= on;
+    }
+    if (any) c.lastSeen = c.t;
+    if (c.t - c.lastSeen > 3000){ fail(c, 'firmware stopped'); return; }
+    c.net(c.bits, c.out);
+    c.dl = c.out[0] >= .05 ? 70 + Math.floor(c.out[0]*185) : 0;
+    c.dr = c.out[1] >= .05 ? 70 + Math.floor(c.out[1]*185) : 0;
+  }
+  const tgt = (d, g) => d <= STALL ? 0 : (d-STALL)/(255-STALL)*VMAX*g;
+  c.vl += (tgt(c.dl,1) - c.vl)*0.001/TAU; c.vr += (tgt(c.dr,gainR) - c.vr)*0.001/TAU;
+  const v = (c.vl+c.vr)/2; c.th += (c.vl-c.vr)/WHEELBASE*0.001; c.x += Math.cos(c.th)*v*0.001; c.y += Math.sin(c.th)*v*0.001;
+  c.t++;
+  if (c.t % 20 === 0){
+    const [i, d] = nearestIdx(c, c.idx, 40);
+    let ds = path.s[i] - path.s[c.idx]; if (ds > path.L/2) ds -= path.L; if (ds < -path.L/2) ds += path.L;
+    c.prog += ds; c.idx = i;
+    if (c.prog >= path.L){ c.laps++; c.prog -= path.L; }
+    if (d > 70){ fail(c, 'left the line'); return; }
+    c.trail.push([c.x, c.y]); if (c.trail.length > 120) c.trail.shift();
+  }
+}
+
+/* ---- drawing ---- */
+const view = $('view'), vx = view.getContext('2d');
+let scale = 1;
+function resize(){
+  const r = devicePixelRatio || 1, w = view.clientWidth; view.width = Math.round(w*r); view.height = Math.round(w*12/19*r); scale = view.width/WW;
+}
+new ResizeObserver(resize).observe(view); resize();
+const COL = { old: '#ff9f43', new: '#3fd7f2' };
+function drawCar(c){
+  const g = vx;
+  g.save(); g.translate(c.x, c.y);
+  g.strokeStyle = COL[c.kind]; g.globalAlpha = .55; g.lineWidth = 6; g.beginPath();
+  c.trail.forEach((p,i) => { const px = p[0]-c.x, py = p[1]-c.y; i ? g.lineTo(px,py) : g.moveTo(px,py); }); g.stroke(); g.globalAlpha = 1;
+  g.rotate(c.th);
+  g.fillStyle = '#11161d'; g.fillRect(-14,-48,28,12); g.fillRect(-14,36,28,12);
+  g.fillStyle = COL[c.kind]; g.strokeStyle = '#0c1118'; g.lineWidth = 2;
+  g.beginPath(); g.roundRect ? g.roundRect(-55,-34,100,68,10) : g.rect(-55,-34,100,68); g.fill(); g.stroke();
+  g.fillStyle = '#0c1118'; g.fillRect(-30,-16,40,32);
+  g.fillStyle = '#1e3a8a'; g.fillRect(64,-(1.5*spacing+10),12,3*spacing+20); g.fillRect(45,-4,20,8);
+  for (let i=0;i<4;i++){ const lat = (1.5-i)*spacing; g.beginPath(); g.arc(70,-lat,6.5,0,2*Math.PI); g.fillStyle = c.bits[i] ? '#ff3b30' : '#f1f5f9'; g.fill(); g.lineWidth=1.5; g.strokeStyle='#0c1118'; g.stroke(); }
+  if (c.frozen > 0){ g.rotate(-c.th); g.fillStyle = 'rgba(255,93,93,.9)'; g.font = '600 34px IBM Plex Mono, monospace'; g.textAlign = 'center'; g.fillText('LOST', 0, -60); }
+  g.restore();
+}
+function render(){
+  vx.setTransform(1,0,0,1,0,0); vx.clearRect(0,0,view.width,view.height);
+  vx.setTransform(scale,0,0,scale,0,0); vx.drawImage(tc,0,0);
+  if (drawing && drawBuf.length > 1){ vx.strokeStyle = '#3fd7f2'; vx.lineWidth = 8; vx.beginPath(); drawBuf.forEach((p,i)=> i ? vx.lineTo(p[0],p[1]) : vx.moveTo(p[0],p[1])); vx.stroke(); }
+  if (shape !== 'draw' || drawnPts) cars.forEach(drawCar);
+}
+
+/* ---- UI ---- */
+function hud(){
+  for (const c of cars){
+    const p = c.kind === 'old' ? 'o' : 'n';
+    $(p+'_laps').textContent = c.laps; $(p+'_fail').textContent = c.fails;
+    [...$(p+'_bits').children].forEach((el,i) => el.classList.toggle('on', !!c.bits[i]));
+    $(p+'_l').style.width = (c.dl/2.55)+'%'; $(p+'_r').style.width = (c.dr/2.55)+'%';
+    const st = $(p+'_st'); st.textContent = c.frozen>0 ? c.state : 'driving'; st.classList.toggle('bad', c.frozen>0);
+  }
+  const o = cars[0], n = cars[1], t = Math.max(o.t, n.t);
+  let v = 'Watching…';
+  if (o.fails + n.fails === 0 && (o.laps + n.laps) > 0) v = 'Both cars are holding the line.';
+  else if (n.fails < o.fails) v = `Learned car: ${n.fails} lost, old car: ${o.fails} lost. The learning helps here.`;
+  else if (n.fails > o.fails) v = `Old car is doing better here (${o.fails} vs ${n.fails} lost). Not every case improved.`;
+  else if (o.fails > 0) v = `Both lost the line ${o.fails} time${o.fails>1?'s':''}. This setup is too hard for either.`;
+  $('verdict').textContent = v;
+}
+function seg(id, cb){ document.querySelectorAll('#'+id+' button').forEach(b => b.addEventListener('click', () => { setSeg(id, b.dataset.v); cb(b.dataset.v); })); }
+function setSeg(id, v){ document.querySelectorAll('#'+id+' button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v === v))); }
+seg('shapeSeg', v => { shape = v; if (v === 'draw'){ drawnPts = null; startDraw(); } else { view.classList.remove('draw'); rebuild(); } });
+seg('styleSeg', v => { style = v; rebuild(); });
+seg('spdSeg', v => { speed = +v; });
+const bind = (id, out, fmt, cb) => { $(id).addEventListener('input', e => { $(out).textContent = fmt(+e.target.value); cb(+e.target.value); }); };
+bind('gap','gapV', v => v+' mm', v => { gap = v; rebuild(); });
+bind('sp','spV', v => v+' mm', v => { spacing = v; resetRace(); });
+bind('mr','mrV', v => v+'%', v => { gainR = v/100; resetRace(); });
+bind('nz','nzV', v => v+'%', v => { noise = v/100; resetRace(); });
+$('restart').addEventListener('click', resetRace);
+$('pause').addEventListener('click', e => { paused = !paused; e.target.textContent = paused ? 'Resume' : 'Pause'; });
+function rebuild(){ buildTrack(); resetRace(); banner(); }
+function banner(){ $('banner').textContent = shape==='draw' && !drawnPts ? 'Draw a closed loop: press, drag all the way round, release' : `Sensors ${spacing} mm apart · right motor ${Math.round(gainR*100)}% · ${style} tape`; }
+function setAll(o){
+  shape = o.shape; style = o.style; gap = o.gap; spacing = o.sp; gainR = o.mr/100; noise = o.nz/100;
+  setSeg('shapeSeg', shape); setSeg('styleSeg', style);
+  $('gap').value = gap; $('gapV').textContent = gap+' mm'; $('sp').value = spacing; $('spV').textContent = spacing+' mm';
+  $('mr').value = o.mr; $('mrV').textContent = o.mr+'%'; $('nz').value = o.nz; $('nzV').textContent = o.nz+'%';
+  view.classList.remove('draw'); rebuild();
+}
+const EXPS = [
+  { shape:'oval', style:'dotted', gap:81, sp:30, mr:92, nz:0 },
+  { shape:'oval', style:'dotted', gap:81, sp:20, mr:92, nz:0 },
+  { shape:'peanut', style:'dashed', gap:81, sp:20, mr:93, nz:2 },
+];
+document.querySelectorAll('.exp').forEach(b => b.addEventListener('click', () => {
+  const e = +b.dataset.e;
+  if (e === 3){ setSeg('shapeSeg','draw'); shape = 'draw'; drawnPts = null; startDraw(); }
+  else setAll(EXPS[e]);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}));
+
+/* ---- draw your own track ---- */
+let drawing = false, drawBuf = [];
+function startDraw(){ view.classList.add('draw'); buildTrack(); banner(); }
+function toWorld(e){ const r = view.getBoundingClientRect(); return [(e.clientX-r.left)/r.width*WW, (e.clientY-r.top)/r.height*WH]; }
+view.addEventListener('pointerdown', e => { if (shape !== 'draw') return; drawing = true; drawBuf = [toWorld(e)]; view.setPointerCapture(e.pointerId); });
+view.addEventListener('pointermove', e => { if (!drawing) return; const p = toWorld(e), q = drawBuf[drawBuf.length-1]; if (Math.hypot(p[0]-q[0], p[1]-q[1]) > 12) drawBuf.push(p); });
+view.addEventListener('pointerup', () => {
+  if (!drawing) return; drawing = false;
+  let P = drawBuf; let len = 0; for (let i=1;i<P.length;i++) len += Math.hypot(P[i][0]-P[i-1][0], P[i][1]-P[i-1][1]);
+  if (P.length < 10 || len < 1500){ $('banner').textContent = 'Too short. Draw a bigger loop.'; return; }
+  for (let it=0; it<3; it++){ const Q = []; for (let i=0;i<P.length;i++){ const a = P[i], b = P[(i+1)%P.length]; Q.push([.75*a[0]+.25*b[0], .75*a[1]+.25*b[1]], [.25*a[0]+.75*b[0], .25*a[1]+.75*b[1]]); } P = Q; }
+  drawnPts = P.map(p => [Math.min(WW-60, Math.max(60, p[0])), Math.min(WH-60, Math.max(60, p[1]))]);
+  view.classList.remove('draw'); rebuild();
+});
+
+/* ---- loop ---- */
+buildTrack(); resetRace(); banner();
+let last = performance.now(), acc = 0, hudT = 0;
+function frame(now){
+  const dt = Math.min(50, now - last); last = now;
+  if (!paused && (shape !== 'draw' || drawnPts)){ acc += dt*speed; let n = 0; while (acc >= 1 && n < 400){ cars.forEach(step); acc -= 1; n++; } if (n >= 400) acc = 0; }
+  render(); hudT += dt; if (hudT > 80){ hud(); hudT = 0; }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
