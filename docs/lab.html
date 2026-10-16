@@ -6,12 +6,12 @@
 <title>Line Follower Lab</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-/* Layout: a test bench. One large stage where two cars race on the same tape, a control rack on the right, one-click experiments below. Deliberately dark, like a lab bench under a lamp: one look, no theme switch. */
+/* Layout: a test bench. One large stage where two cars race on the same tape, a control rack on the right, one-click experiments below. One light look, no theme switch. */
 :root{
-  --bench:#0c1118; --panel:#141b25; --panel2:#1a2330; --line:#263243; --fg:#e7edf5; --muted:#8a9bb1;
-  --old:#ff9f43; --new:#3fd7f2; --good:#4ade80; --bad:#ff5d5d; --tape:#0a0d12; --floor:#dfe5ec;
+  --bench:#f5f8fc; --panel:#ffffff; --panel2:#f0f4f9; --line:#d3dce8; --fg:#0e1a2b; --muted:#53647d;
+  --old:#e8870e; --new:#0a78b4; --good:#1a8a5a; --bad:#d9342b; --tape:#0a0d12; --floor:#dfe5ec;
   --display:'Barlow Condensed','Arial Narrow',sans-serif; --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
-  color-scheme:dark;
+  color-scheme:light;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bench);color:var(--fg);font:15px/1.5 var(--sans);
@@ -29,7 +29,7 @@ h1{font:700 clamp(34px,5.5vw,58px)/.95 var(--display);text-transform:uppercase;m
 .stage{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
 #view{display:block;width:100%;aspect-ratio:19/12;max-width:100%;touch-action:none;background:var(--floor)}
 #view.draw{cursor:crosshair}
-.banner{position:absolute;left:50%;top:14px;transform:translateX(-50%);font:600 13px var(--mono);padding:6px 14px;border-radius:2em;background:rgba(12,17,24,.85);border:1px solid var(--line);color:var(--fg);pointer-events:none;white-space:nowrap}
+.banner{position:absolute;left:50%;top:14px;transform:translateX(-50%);font:600 13px var(--mono);padding:6px 14px;border-radius:2em;background:rgba(255,255,255,.92);border:1px solid var(--line);color:var(--fg);pointer-events:none;white-space:nowrap}
 .rack{display:flex;flex-direction:column;gap:12px}
 .box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
 .box h2{font:600 13px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
@@ -41,7 +41,7 @@ input[type=range]{width:100%;accent-color:var(--new)}
 .seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .seg button{flex:1 1 auto;font:500 13px var(--sans);padding:7px 8px;border:0;background:var(--panel2);color:var(--fg);cursor:pointer}
 .seg button+button{border-left:1px solid var(--line)}
-.seg button[aria-pressed="true"]{background:var(--new);color:#05222a;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--new);color:#fff;font-weight:600}
 button:focus-visible,input:focus-visible{outline:2px solid var(--new);outline-offset:2px}
 .cars{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .car{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;border-top:3px solid var(--c)}
@@ -50,10 +50,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--new);outline-of
 .car .big div b{display:block;font:700 30px/1 var(--display);font-variant-numeric:tabular-nums}
 .car .big div span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
 .bits{display:flex;gap:4px;margin:6px 0}
-.bits i{flex:1;height:10px;border-radius:3px;background:#2a3546}
+.bits i{flex:1;height:10px;border-radius:3px;background:#d6dee8}
 .bits i.on{background:#ff3b30;box-shadow:0 0 8px #ff3b30}
 .pwm{display:grid;grid-template-columns:12px 1fr;gap:6px;align-items:center;font:11px var(--mono);color:var(--muted);margin-top:3px}
-.pwm div{height:6px;background:#2a3546;border-radius:3px;overflow:hidden}
+.pwm div{height:6px;background:#d6dee8;border-radius:3px;overflow:hidden}
 .pwm div span{display:block;height:100%;background:var(--c);width:0}
 .st{font:600 11px var(--mono);margin-top:8px;color:var(--good)}
 .st.bad{color:var(--bad)}
@@ -66,7 +66,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--new);outline-of
 .exp em{font:500 11px var(--mono);font-style:normal;color:var(--new);letter-spacing:.1em;text-transform:uppercase}
 .row{display:flex;gap:8px}
 .row button{flex:1;font:600 13px var(--sans);padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);cursor:pointer}
-.row button.primary{background:var(--new);color:#05222a;border-color:var(--new)}
+.row button.primary{background:var(--new);color:#fff;border-color:var(--new)}
 footer{color:var(--muted);font:12px var(--mono)}
 footer a{color:var(--new)}
 </style>
@@ -267,7 +267,7 @@ function resize(){
   const r = devicePixelRatio || 1, w = view.clientWidth; view.width = Math.round(w*r); view.height = Math.round(w*12/19*r); scale = view.width/WW;
 }
 new ResizeObserver(resize).observe(view); resize();
-const COL = { old: '#ff9f43', new: '#3fd7f2' };
+const COL = { old: '#e8870e', new: '#0a78b4' };
 function drawCar(c){
   const g = vx;
   g.save(); g.translate(c.x, c.y);
@@ -286,7 +286,7 @@ function drawCar(c){
 function render(){
   vx.setTransform(1,0,0,1,0,0); vx.clearRect(0,0,view.width,view.height);
   vx.setTransform(scale,0,0,scale,0,0); vx.drawImage(tc,0,0);
-  if (drawing && drawBuf.length > 1){ vx.strokeStyle = '#3fd7f2'; vx.lineWidth = 8; vx.beginPath(); drawBuf.forEach((p,i)=> i ? vx.lineTo(p[0],p[1]) : vx.moveTo(p[0],p[1])); vx.stroke(); }
+  if (drawing && drawBuf.length > 1){ vx.strokeStyle = '#0a78b4'; vx.lineWidth = 8; vx.beginPath(); drawBuf.forEach((p,i)=> i ? vx.lineTo(p[0],p[1]) : vx.moveTo(p[0],p[1])); vx.stroke(); }
   if (shape !== 'draw' || drawnPts) cars.forEach(drawCar);
 }
 
