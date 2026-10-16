@@ -72,6 +72,14 @@ Other changes tested:
 - `LOST_STOP_MS` raised from 1500 to 3000 ms. At 1500 ms the car sometimes stopped on dotted tape while it was still on the line.
 - Holding an average of recent steering while in a gap made things worse (0 / 12) and was not kept.
 
+## Real ESP32 build
+
+The firmware was also compiled with the official Arduino-ESP32 core 3.3.12 for an ESP32 DevKit. It builds and uses 283 KB
+of flash (21%) and 22 KB of RAM (6%). That build caught one bug the PC test could not: the weight arrays were named
+`B1`, `B2`, `B3`, which Arduino already defines as binary constants. They are now `NN_W1` ... `NN_B3`.
+Booting the binary in Espressif's QEMU ESP32 emulator did not get past start-up (it is a known weak spot of the emulator
+with Arduino core 3.x), so the closed-loop testing above is done with the PC simulator.
+
 ## Limits
 
 All of this is simulation. The car has not been built. Expect to retune `MIN_DUTY`, the sensor height and the
