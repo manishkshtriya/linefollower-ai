@@ -2,6 +2,8 @@
 
 **Live demo (3D car driven by the trained network): https://manishkshtriya.github.io/linefollower-ai/**
 
+**Game: [Be the AI](game/README.md)**: drive the car yourself against the network (`python3 game/line_follower_game.py`).
+
 **New: the network learned to drive in the simulator** (clean runs 141 → 205 of 240 random cars). Video: [`sim/ai_learns_the_fix.mp4`](sim/ai_learns_the_fix.mp4), details: [`learn/README.md`](learn/README.md)
 
 **Simulation video (the real firmware driving a virtual car):** [`sim/line_follower_sim.mp4`](sim/line_follower_sim.mp4)
@@ -46,6 +48,7 @@ These are simulation outputs only. The firmware has not been run on a real car y
 | `firmware/linefollower/nn.h` | The network forward pass in C |
 | `firmware/linefollower/weights.h` | Trained weights (generated, replace after every training run) |
 | `docs/` | Project website (`index.html`, served by GitHub Pages) and simulation screenshots |
+| `game/` | Desktop game (pygame): race the network, hard mode with only the 4 sensor lamps, draw your own track |
 | `learn/` | The network learns by itself in the simulator (evolution strategy). The firmware now uses these learned weights |
 | `sim/` | Firmware-in-the-loop simulator: runs `linefollower.ino` unchanged against a virtual car. See `sim/README.md` |
 | `wokwi/` | Ready-made Wokwi ESP32 circuit: run the real firmware in the browser with switches as sensors |
