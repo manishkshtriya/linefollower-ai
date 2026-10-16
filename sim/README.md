@@ -23,6 +23,7 @@ g++ -O2 -std=c++17 hil_sim.cpp -o hil_sim
 ./grid.sh                                       # 12 hard scenarios, several sensor spacings
 python3 montecarlo.py 30 20                     # 30 random cars per track, 20 mm spacing
 python3 render.py line_follower_sim.mp4         # makes the video (needs numpy, matplotlib, imageio-ffmpeg)
+python3 narrate.py <kokoro dir> line_follower_sim.mp4 out.mp4   # adds voice-over and motor sound (kokoro-onnx)
 ```
 
 Options: `--track mixed|solid|dashed|dotted`, `--gap <mm>`, `--spacing <mm>`, `--seconds`, `--noise`,
