@@ -69,7 +69,7 @@ def title(s, t, y=70):
 
 # ---------------------------------------------------------------- new scenes
 def scene_overview(t, d):
-    scr.fill(BG); title("THE WHOLE IDEA", t)
+    soft_bg(); title("THE WHOLE IDEA", t)
     boxes = [("SENSE", "4 IR sensors", "0110"), ("THINK", "neural network", "107 numbers"), ("ACT", "2 BO motors", "PWM 0-255")]
     for i, (h, a, b) in enumerate(boxes):
         al = fade(t, .6 + i * 1.4)
@@ -86,7 +86,7 @@ def scene_overview(t, d):
 
 
 def scene_ota(t, d):
-    scr.fill(BG); title("OVER-THE-AIR UPDATES", t)
+    soft_bg(); title("OVER-THE-AIR UPDATES", t)
     ph = phone(300, 400, 170, 320); c = chip(960, 400)
     steps = [(0.5, "1  ESP32 makes its own WiFi"), (d * .33, "2  Phone gives it your home WiFi"), (d * .62, "3  New firmware flies over the air")]
     for i, (st, s) in enumerate(steps):
@@ -103,7 +103,7 @@ def scene_ota(t, d):
 
 
 def scene_config(t, d):
-    scr.fill(BG); title("CHANGE THE BRAIN, NOT THE CODE", t)
+    soft_bg(); title("CHANGE THE BRAIN, NOT THE CODE", t)
     ph = phone(200, 420, 160, 300); c = chip(1060, 420)
     cards = [("weights.json", ['{"W": [[-0.64, 0.62,', '        -0.96, 1.01],', '       ...], "b": [...]}'], 0.8),
              ("speed.csv", ["min_pwm,70", "max_pwm,255", "trim_right,1.04"], d * .45)]
@@ -117,7 +117,7 @@ def scene_config(t, d):
 
 
 def scene_feedback(t, d):
-    scr.fill(BG); title("THE CAR REPORTS BACK", t)
+    soft_bg(); title("THE CAR REPORTS BACK", t)
     s = phone(380, 420, 260, 470)
     pats = [[0, 1, 1, 0], [1, 1, 0, 0], [0, 0, 1, 1], [0, 0, 0, 0]]; bits = pats[int(t / 1.3) % 4]; out = F.net(bits)
     for i in range(4):
@@ -135,7 +135,7 @@ def scene_feedback(t, d):
 
 
 def scene_bomotor(t, d):
-    scr.fill(BG); title("BO MOTORS: REAL SPEED", t)
+    soft_bg(); title("BO MOTORS: REAL SPEED", t)
     ang = t * 6
     pygame.draw.rect(scr, (250, 204, 21), (140, 300, 200, 110), border_radius=12); pygame.draw.rect(scr, INK, (140, 300, 200, 110), 3, border_radius=12)
     text("BO motor", f_txt, INK, (240, 355)); wheel(420, 355, 85, ang)
@@ -152,7 +152,7 @@ def scene_bomotor(t, d):
 
 
 def scene_bench(t, d):
-    scr.fill(BG); title("BENCH TEST: WHEELS IN THE AIR", t)
+    soft_bg(); title("BENCH TEST: WHEELS IN THE AIR", t)
     sheet = pygame.Rect(240, 330, 800, 300); pygame.draw.rect(scr, (255, 255, 255), sheet, border_radius=8); pygame.draw.rect(scr, LINE, sheet, 2, border_radius=8)
     text("printed test sheet", f_small, MUTED, (sheet.x + 12, sheet.bottom - 28), "topleft")
     cx = W // 2; lx = cx + math.sin(t * 1.1) * 150
@@ -170,7 +170,7 @@ def scene_bench(t, d):
 
 
 def scene_calib(t, d):
-    scr.fill(BG); title("FIX THE LIGHTING: CALIBRATE", t)
+    soft_bg(); title("FIX THE LIGHTING: CALIBRATE", t)
     bright = [3400, 900, 850, 3300]; dim = [2300, 1300, 1250, 2200]
     k = ease((t - d * .3) / 1.5); vals = [b + (m - b) * k for b, m in zip(bright, dim)]
     calib = t > d * .62
@@ -187,7 +187,7 @@ def scene_calib(t, d):
 
 
 def scene_flex(t, d):
-    scr.fill(BG); title("THE REAL TRACK: FLEX PRINT", t)
+    soft_bg(); title("THE REAL TRACK: FLEX PRINT", t)
     cols, rows = 6, 3; tw, th = 150, 150; x0, y0 = W // 2 - cols * tw // 2, 190
     shown = int(t / 0.25)
     for k in range(min(shown, cols * rows)):
@@ -204,7 +204,7 @@ def scene_flex(t, d):
 
 
 def scene_paper(t, d):
-    scr.fill(BG); title("NEXT: A RESEARCH PAPER", t)
+    soft_bg(); title("NEXT: A RESEARCH PAPER", t)
     pg = pygame.Rect(0, 0, 420, 520); pg.center = (470, 420)
     pygame.draw.rect(scr, (220, 226, 234), pg.move(8, 10), border_radius=6); pygame.draw.rect(scr, (255, 255, 255), pg, border_radius=6)
     text("A 107-Parameter Neural Line Follower", f_small, INK, (pg.centerx, pg.y + 40))
@@ -220,23 +220,68 @@ def scene_paper(t, d):
     text("until the paper is published", f_txt, MUTED, (890, 515), alpha=fade(t, 2.5))
 
 
+def soft_bg():
+    """Light background with a faint grid and a soft blue glow (professional version)."""
+    scr.fill((247, 250, 253))
+    for x in range(0, W, 40): pygame.draw.line(scr, (236, 241, 247), (x, 0), (x, H))
+    for y in range(0, H, 40): pygame.draw.line(scr, (236, 241, 247), (0, y), (W, y))
+    g = pygame.Surface((W, H), pygame.SRCALPHA)
+    pygame.draw.circle(g, (10, 120, 180, 14), (W - 160, 120), 360); pygame.draw.circle(g, (232, 150, 0, 10), (160, H - 80), 300)
+    scr.blit(g, (0, 0))
+
+
+def scene_title(t, d):
+    soft_bg()
+    w = int(560 * ease(t / 1.2)); pygame.draw.rect(scr, AI, (W // 2 - w // 2, 250, w, 5), border_radius=3)
+    text("AI LINE FOLLOWER", F.f_huge if hasattr(F, "f_huge") else f_big, INK, (W // 2, 180), alpha=fade(t, .2))
+    text("A 107-parameter neural network on an ESP32", f_mid, AI, (W // 2, 300), alpha=fade(t, 1))
+    text("Manish M P", f_mid, INK, (W // 2, 420), alpha=fade(t, 2))
+    text("Under the guidance of Dr. Jason Elroy Martis", f_txt, MUTED, (W // 2, 465), alpha=fade(t, 2.6))
+    text("NMAM Institute of Technology, Nitte", f_txt, MUTED, (W // 2, 500), alpha=fade(t, 3.2))
+
+
+def scene_why_ann(t, d):
+    soft_bg(); title("WHY AN ANN, NOT A CNN?", t)
+    cols = [("CNN", (190, 70, 60), ["Built for images", "Needs a camera", "320 x 240 x 3 = 230,400 inputs", "Thousands to millions of weights", "Needs a GPU board (Jetson)"]),
+            ("ANN  (chosen)", GREEN, ["Built for a few numbers", "4 IR sensor values", "4 inputs", "107 weights", "Runs on an ESP32, 200 times a second"])]
+    for i, (head, col, rows) in enumerate(cols):
+        al = fade(t, .6 + i * 2.2)
+        if al == 0: continue
+        r = pygame.Rect(0, 0, 520, 420); r.center = (W // 2 - 290 + i * 580, 420)
+        s = pygame.Surface(r.size, pygame.SRCALPHA)
+        pygame.draw.rect(s, (255, 255, 255, al), (0, 0, *r.size), border_radius=18)
+        pygame.draw.rect(s, col + (al,), (0, 0, *r.size), 4 if i else 2, border_radius=18)
+        pygame.draw.rect(s, col + (int(al * .12),), (0, 0, r.w, 70), border_top_left_radius=18, border_top_right_radius=18)
+        scr.blit(s, r)
+        text(head, f_mid, col, (r.centerx, r.y + 36), alpha=al)
+        for k, row in enumerate(rows):
+            text(row, f_txt, INK if i else MUTED, (r.x + 36, r.y + 100 + k * 58), "topleft", fade(t, 1 + i * 2.2 + k * .35))
+    text("Our input is 1-D and tiny, so a small fully connected network is enough", f_txt, AI, (W // 2, 668), alpha=fade(t, d * .7))
+
+
 def scene_close(t, d, version):
     scr.fill(BG)
     lines = (["FOUR SENSORS.", "107 PARAMETERS.", "ONE LINE."] if version == "pro" else ["FOUR EYES.", "107 NUMBERS.", "LET'S BUILD IT."])
     for i, s in enumerate(lines):
         text(s, f_big, (AI if version == "pro" else PINK) if i == 2 else INK, (W // 2, 200 + i * 85), alpha=fade(t, .3 + i * 1.1))
-    text("AI Line Follower  ·  Manish  ·  NMAMIT", f_txt, MUTED, (W // 2, 520), alpha=fade(t, 4))
+    if version == "pro":
+        text("Manish M P", f_mid, INK, (W // 2, 500), alpha=fade(t, 3.6))
+        text("Guide: Dr. Jason Elroy Martis  ·  NMAMIT, Nitte", f_txt, MUTED, (W // 2, 545), alpha=fade(t, 4))
+    else:
+        text("AI Line Follower  ·  Manish M P  ·  NMAMIT", f_txt, MUTED, (W // 2, 520), alpha=fade(t, 4))
 
 
-DRAWN = {"overview": scene_overview, "tracks": F.scene_tracks, "brain": F.scene_brain, "ota": scene_ota, "config": scene_config,
+DRAWN = {"title": scene_title, "why_ann": scene_why_ann, "overview": scene_overview, "tracks": F.scene_tracks, "brain": F.scene_brain, "ota": scene_ota, "config": scene_config,
          "feedback": scene_feedback, "bomotor": scene_bomotor, "bench": scene_bench, "calib": scene_calib, "flex": scene_flex, "paper": scene_paper}
 CLIPS = {"sim": F.CLIPS["sim"], "flaw": F.CLIPS["flaw"], "learn": F.CLIPS["learn"]}
 
 SCRIPTS = {
  "pro": {"voice": "af_heart", "speed": 0.97, "lines": [
+  ("title", "", "A I line follower. A project by Manish M P, under the guidance of Doctor Jason Elroy Martis, at N M A M Institute of Technology."),
   ("overview", "Concept", "This project is an A I line follower. Four infrared sensors feed a neural network of one hundred and seven parameters, which sets the speed of two motors."),
   ("tracks", "The challenge", "The goal is to follow solid, dashed and dotted lines, where every sensor goes dark in the gaps."),
   ("brain", "The network", "The network has four inputs, two hidden layers of seven neurons, and two outputs. It runs on an E S P thirty-two, at two hundred decisions per second."),
+  ("why_ann", "Why an ANN", "Why an A N N, and not a C N N? A C N N is built for images, and would need a camera and a much larger processor. Our input is just four sensor values, so a small fully connected network is enough. That keeps the model at one hundred and seven parameters, small enough for an E S P thirty-two."),
   ("sim", "Simulation", "Before building hardware, the real firmware was tested in a custom simulator, with motor stall, motor lag and sensor noise."),
   ("flaw", "A finding", "The simulator showed that sensor spacing matters. Twenty millimetres works far better than thirty, especially with a weaker motor."),
   ("learn", "Training", "Training has two stages. Supervised learning with Adam, then self-improvement with an evolution strategy. Clean runs rose from one hundred and forty-one to two hundred and five, out of two hundred and forty."),
@@ -248,7 +293,7 @@ SCRIPTS = {
   ("calib", "Calibration", "Infrared readings change with lighting, so each sensor is calibrated on the actual floor before running."),
   ("flex", "Track test", "Then the car runs on a large flex-printed track, followed by harder tracks and higher speeds."),
   ("paper", "Publication", "The results will be written up as a research paper. The repository stays private until publication."),
-  ("close", "", "Four sensors. One hundred and seven parameters. One line."),
+  ("close", "", "Four sensors. One hundred and seven parameters. One line. Thank you."),
  ]},
  "genz": {"voice": "af_bella", "speed": 1.06, "lines": [
   ("overview", "THE SQUAD", "Okay so here's the vibe. Four little eyes, one tiny brain, two motors. That's literally the whole car."),
@@ -277,6 +322,9 @@ def overlay(version, label, idx, total, t):
             r = f_small.render(f"{idx}/{total - 1}   {label.upper()}", True, MUTED)
             scr.blit(r, (34, H - 40))
         pygame.draw.rect(scr, (226, 232, 240), (0, 0, W, 5)); pygame.draw.rect(scr, AI, (0, 0, W * idx / (total - 1), 5))
+        if idx > 0:
+            r2 = f_small.render("Manish M P  ·  Guide: Dr. Jason Elroy Martis  ·  NMAMIT", True, (150, 162, 180))
+            scr.blit(r2, r2.get_rect(bottomright=(W - 30, H - 18)))
     else:
         if label:
             img = pygame.font.SysFont("arialblack,arial", 34, bold=True).render(label, True, (255, 255, 255))
