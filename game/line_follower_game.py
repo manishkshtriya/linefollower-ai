@@ -6,7 +6,7 @@ Same car, same weak motor, same 4 IR sensors. Hard mode hides the track: you onl
 which is everything the network ever sees.
 
 Run:   python3 line_follower_game.py
-Needs: Python 3.9+, pygame, numpy   (pip3 install pygame numpy)
+Needs: Python 3.9+, pygame-ce, numpy   (pip3 install pygame-ce numpy)
 """
 import json
 import math

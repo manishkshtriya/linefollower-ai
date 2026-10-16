@@ -14,13 +14,20 @@ see the 4 sensor lamps, which is everything the network ever sees.
    (Already cloned? Run `cd linefollower-ai && git pull` instead.)
 3. Install the two things the game needs:
    ```bash
-   python3 -m pip install pygame numpy
+   python3 -m pip install pygame-ce numpy
    ```
 4. Start the game:
    ```bash
    cd linefollower-ai/game
    python3 line_follower_game.py
    ```
+
+If you see `font module not available` (new Python versions such as 3.14), the plain `pygame` package was built without
+fonts. Swap it for `pygame-ce`, the maintained version with ready-made installers:
+```bash
+python3 -m pip uninstall -y pygame
+python3 -m pip install pygame-ce
+```
 
 Shortcut: after step 2 you can double-click `game/play.command` in Finder. If macOS blocks it, right-click it, choose
 **Open**, then **Open** again. Windows and Linux work the same way with `python` instead of `python3`.
