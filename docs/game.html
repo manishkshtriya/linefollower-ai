@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Be the AI</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: arcade cabinet. Track stage on top, four huge sensor lamps and two steering pads below. Single dark look on purpose. */
+:root{--bg:#0b0f15;--panel:#141b25;--line:#263243;--fg:#eef3f9;--muted:#8a9bb1;--you:#ffd23f;--ai:#3fd7f2;--red:#ff3b30;--good:#4ade80;
+--display:'Barlow Condensed','Arial Narrow',sans-serif;--sans:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 var(--sans);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 40px;user-select:none}
+.wrap{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px}
+h1{font:700 clamp(36px,6vw,60px)/.9 var(--display);text-transform:uppercase;margin:0}
+h1 span{color:var(--ai)}
+.sub{color:var(--muted);margin:4px 0 0;max-width:60ch}
+.score{display:flex;gap:10px}
+.sc{background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--c);border-radius:10px;padding:8px 14px;min-width:120px}
+.sc .n{font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--c)}
+.sc .v{font:700 30px/1 var(--display);font-variant-numeric:tabular-nums}
+.sc .v small{font:500 12px var(--mono);color:var(--muted)}
+.stage{position:relative;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#dfe5ec}
+#view{display:block;width:100%;aspect-ratio:19/11;max-width:100%}
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(11,15,21,.82);text-align:center;padding:20px}
+.overlay h2{font:700 clamp(30px,5vw,48px)/1 var(--display);text-transform:uppercase;margin:0}
+.overlay p{margin:0;color:#c9d4e2;max-width:52ch}
+.btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.btn{font:600 16px var(--sans);padding:12px 22px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
+.btn.go{background:var(--you);color:#1d1600;border-color:var(--you)}
+.btn.hard{background:var(--red);color:#fff;border-color:var(--red)}
+.btn:focus-visible{outline:2px solid var(--ai);outline-offset:2px}
+.timer{position:absolute;right:12px;top:10px;font:700 34px var(--display);color:#0b0f15;background:rgba(255,255,255,.85);border-radius:8px;padding:0 12px}
+.cab{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center}
+.pad{height:96px;border-radius:14px;border:2px solid var(--line);background:var(--panel);color:var(--fg);font:700 34px var(--display);cursor:pointer;touch-action:none}
+.pad.on{background:var(--you);color:#1d1600;border-color:var(--you)}
+.lamps{display:flex;gap:12px;padding:14px 18px;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.lamp{width:clamp(36px,8vw,64px);aspect-ratio:1;border-radius:50%;background:#2a3546;border:3px solid #3a4a60;display:flex;align-items:flex-end;justify-content:center;font:600 11px var(--mono);color:var(--muted);padding-bottom:4px}
+.lamp.on{background:var(--red);border-color:#ff8a80;box-shadow:0 0 22px var(--red);color:#fff}
+.hint{color:var(--muted);font-size:13px;text-align:center}
+@media(max-width:560px){.cab{grid-template-columns:1fr 1fr}.lamps{grid-column:1/3;order:-1;justify-content:center}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div><h1>Be the <span>AI</span></h1>
+      <p class="sub">You drive the line follower against the learned network. Hard mode turns the lights off: you only get the 4 sensor lamps, exactly what the network sees.</p></div>
+    <div class="score">
+      <div class="sc" style="--c:var(--you)"><div class="n">You</div><div class="v"><span id="yl">0</span> <small>laps</small> <span id="yf">0</span> <small>lost</small></div></div>
+      <div class="sc" style="--c:var(--ai)"><div class="n">AI</div><div class="v"><span id="al">0</span> <small>laps</small> <span id="af">0</span> <small>lost</small></div></div>
+    </div>
+  </header>
+  <div class="stage">
+    <canvas id="view" aria-label="Race track with your car (yellow) and the AI car (blue)"></canvas>
+    <div class="timer" id="timer">60</div>
+    <div class="overlay" id="ov">
+      <h2 id="ovT">Can you beat the network?</h2>
+      <p id="ovP">60 seconds on a dashed and dotted track. Steer with ← → keys or the pads. Losing the line costs you time. 107 numbers against your brain.</p>
+      <div class="btns"><button class="btn go" id="easy" type="button">Normal mode</button><button class="btn hard" id="hard" type="button">Hard: sensors only</button></div>
+      <p id="best" style="font:500 13px var(--mono);color:var(--muted)"></p>
+    </div>
+  </div>
+  <div class="cab">
+    <button class="pad" id="padL" type="button" aria-label="Steer left">◀ LEFT</button>
+    <div class="lamps" aria-label="Your four sensors"><div class="lamp" id="l0">S1</div><div class="lamp" id="l1">S2</div><div class="lamp" id="l2">S3</div><div class="lamp" id="l3">S4</div></div>
+    <button class="pad" id="padR" type="button" aria-label="Steer right">RIGHT ▶</button>
+  </div>
+  <p class="hint">Red lamp = that sensor sees tape. Line under the left sensors → steer left. All dark → you are in a gap (or lost).</p>
+</div>
+
+<script>
+(function(){
+const WTS = {"old": [-0.64361, 0.62476, -0.96239, 1.00675, -0.08379, 0.61366, 0.53967, 1.52688, 0.08018, -1.34756, -0.0544, 0.02836, 0.40855, -0.10555, -1.01903, -0.5941, -1.32457, -0.3806, -1.00059, -0.29121, 0.46194, 0.18022, 0.37132, 0.97442, 1.01632, 0.77425, -0.56859, -0.12905, -0.36335, -0.12098, 0.23133, -0.10708, 0.52748, 0.14805, -0.24576, -0.20116, 1.25305, -0.33164, -0.03012, -0.38946, 0.90369, 0.77624, 1.2299, -0.03181, 0.4344, -0.84829, -0.11707, 0.0725, -0.18557, 0.84448, 0.33216, -0.2798, -0.16613, -0.29442, 0.59209, -0.51671, 0.70278, 0.50131, 1.149, -0.51029, 1.08459, -0.67185, -1.03984, 0.46614, 0.09759, 0.64227, 0.0786, 0.11427, -0.99369, -0.14068, 0.13288, 1.40918, -0.93017, -2.00334, 0.76727, 0.2414, 0.12723, 0.17058, -0.74979, -0.3113, 0.90278, -0.19591, -0.4851, 0.7518, 0.28373, -0.45038, 0.20718, -0.34562, -0.30193, -0.21284, 0.38157, 1.40134, 0.01833, 1.78229, 1.83653, 0.22284, -0.33953, -0.94201, 1.05844, -0.74125, -0.09615, -0.84488, -0.50882, -1.02473, 0.9863, 0.33768, 0.41952], "new": [-0.74038, 0.30995, -0.92329, 1.04408, -0.41492, 0.41426, 0.80285, 1.76, 0.11344, -1.36056, 0.18754, 0.33595, 0.40525, 0.36212, -1.23228, -0.90619, -1.41012, -0.32647, -1.0526, -0.29734, 0.11043, 0.17771, 0.04985, 1.00837, 1.11335, 0.74755, -0.50371, -0.35368, -0.38072, 0.12643, 0.50704, 0.22631, 0.37242, 0.4629, -0.46085, -0.67378, 1.13518, -0.11845, 0.00956, -0.1248, 1.03809, 0.67194, 1.45763, 0.22863, 0.42333, -0.74912, -0.01566, -0.37724, -0.04336, 0.92848, 0.41188, -0.33994, -0.09565, 0.02608, 0.47151, -0.75368, 0.59866, 0.80437, 0.97713, -0.5638, 1.13334, -0.77199, -0.8475, 0.33327, 0.63902, 0.72214, 0.22805, 0.07349, -1.26, -0.16776, 0.32547, 1.33907, -0.76662, -2.24475, 0.72861, -0.03432, 0.2685, 0.08327, -0.61172, -0.2845, 0.90106, -0.29019, -0.22685, 1.2493, 0.60411, -0.39742, 0.74219, -0.28755, -0.36412, -0.40915, 0.98512, 1.27256, 0.03564, 1.77207, 1.84295, 0.50534, -0.13257, -1.26477, 0.89367, -0.83265, 0.14096, -0.64129, -0.56735, -1.25984, 1.28592, 0.34134, 0.27437]};
+const $ = id => document.getElementById(id);
+const WW = 1900, WH = 1100, TAPE = 19, WB = 81, AHEAD = 70, VMAX = 450, STALL = 60, TAU = 0.06, SP = 20;
+const w = WTS.new;
+function net(inp, out){
+  const h1 = [], h2 = [];
+  for (let j=0;j<7;j++){ let a=w[28+j]; for(let i=0;i<4;i++) a+=w[j*4+i]*inp[i]; h1[j]=Math.tanh(a); }
+  for (let j=0;j<7;j++){ let a=w[35+49+j]; for(let i=0;i<7;i++) a+=w[35+j*7+i]*h1[i]; h2[j]=Math.tanh(a); }
+  for (let j=0;j<2;j++){ let a=w[91+14+j]; for(let i=0;i<7;i++) a+=w[91+j*7+i]*h2[i]; out[j]=1/(1+Math.exp(-a)); }
+}
+/* track: a winding loop, mixed dashed/dotted */
+const tc = document.createElement('canvas'); tc.width = WW; tc.height = WH;
+const tx = tc.getContext('2d', { willReadFrequently: true });
+const P = []; { const N = 6000; for (let i=0;i<N;i++){ const t=2*Math.PI*i/N, r=430*(1+0.22*Math.cos(3*t)+0.08*Math.sin(5*t)); P.push([WW/2+r*Math.cos(t)*1.55, WH/2+r*Math.sin(t)*1.0]); } }
+const n = P.length, S = new Float32Array(n); for (let i=1;i<n;i++) S[i]=S[i-1]+Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);
+const L = S[n-1]+Math.hypot(P[0][0]-P[n-1][0],P[0][1]-P[n-1][1]);
+tx.fillStyle='#dfe5ec'; tx.fillRect(0,0,WW,WH); tx.fillStyle='#0a0d12';
+for (let i=0;i<n;i++){ const f=S[i]/L; const st = f<.15?'solid': f<.45?'dashed': f<.55?'solid': f<.9?'dotted':'solid';
+  const on = st==='solid' || (st==='dashed' ? S[i]%162<81 : S[i]%100<19); if (on){ tx.beginPath(); tx.arc(P[i][0],P[i][1],TAPE/2,0,7); tx.fill(); } }
+const md = tx.getImageData(0,0,WW,WH).data, mask = new Uint8Array(WW*WH); for (let i=0,j=0;i<mask.length;i++,j+=4) mask[i]=md[j]<100?1:0;
+const tape = (x,y) => { const ix=Math.round(x), iy=Math.round(y); return ix>=0&&iy>=0&&ix<WW&&iy<WH&&mask[iy*WW+ix]===1; };
+/* cars */
+function car(kind){ return { kind, bits:[0,0,0,0], out:[0,0], laps:0, fails:0, trail:[] }; }
+const you = car('you'), ai = car('ai'); let steer = 0;
+function place(c, idx){ for (let k=0;k<n;k++){ const i=(idx+k)%n; if (tape(P[i][0],P[i][1])){ idx=i; break; } }
+  const a=P[idx], b=P[(idx+3)%n]; Object.assign(c,{x:a[0],y:a[1],th:Math.atan2(b[1]-a[1],b[0]-a[0]),vl:0,vr:0,dl:0,dr:0,t:0,seen:0,idx,prog:0,frozen:0,trail:[]}); }
+function near(c){ let best=1e18, bi=c.idx; for (let k=-40;k<=40;k++){ const i=((c.idx+k)%n+n)%n, dx=P[i][0]-c.x, dy=P[i][1]-c.y, d=dx*dx+dy*dy; if (d<best){best=d;bi=i;} } return [bi,Math.sqrt(best)]; }
+function fail(c){ c.fails++; c.frozen=1200; c.vl=c.vr=c.dl=c.dr=0; }
+function step(c){
+  if (c.frozen>0){ if (--c.frozen===0){ const f=c.fails, l=c.laps; place(c,(c.idx+30)%n); c.fails=f; c.laps=l; } return; }
+  if (c.t%5===0){
+    const fx=Math.cos(c.th), fy=Math.sin(c.th), lx=Math.sin(c.th), ly=-Math.cos(c.th); let any=0;
+    for (let i=0;i<4;i++){ const lat=(1.5-i)*SP, px=c.x+fx*AHEAD+lx*lat, py=c.y+fy*AHEAD+ly*lat; let h=tape(px,py)?1:0;
+      for (let k=0;k<8;k++){ const a=k*Math.PI/4; h+=tape(px+4*Math.cos(a),py+4*Math.sin(a))?1:0; } c.bits[i]=h*2>=9?1:0; any|=c.bits[i]; }
+    if (any) c.seen=c.t;
+    if (c.t-c.seen>3000){ fail(c); return; }
+    if (c.kind==='ai') net(c.bits,c.out); else c.out = steer<0?[0.3,0.95]: steer>0?[0.95,0.3]:[0.85,0.85];
+    c.dl = 70+Math.floor(c.out[0]*185); c.dr = 70+Math.floor(c.out[1]*185);
+  }
+  const tg=d=>d<=STALL?0:(d-STALL)/(255-STALL)*VMAX;
+  c.vl+=(tg(c.dl)-c.vl)*.001/TAU; c.vr+=(tg(c.dr)*0.94-c.vr)*.001/TAU;   // both cars: right motor 6% weaker
+  const v=(c.vl+c.vr)/2; c.th+=(c.vl-c.vr)/WB*.001; c.x+=Math.cos(c.th)*v*.001; c.y+=Math.sin(c.th)*v*.001; c.t++;
+  if (c.t%20===0){ const [i,d]=near(c); let ds=S[i]-S[c.idx]; if (ds>L/2) ds-=L; if (ds<-L/2) ds+=L; c.prog+=ds; c.idx=i;
+    if (c.prog>=L){ c.laps++; c.prog-=L; } if (d>70){ fail(c); return; } c.trail.push([c.x,c.y]); if (c.trail.length>90) c.trail.shift(); }
+}
+/* render */
+const view=$('view'), g=view.getContext('2d'); let sc=1;
+function resize(){ const r=devicePixelRatio||1; view.width=Math.round(view.clientWidth*r); view.height=Math.round(view.clientWidth*11/19*r); sc=view.width/WW; }
+new ResizeObserver(resize).observe(view); resize();
+let mode='easy', running=false, tLeft=60;
+function drawCar(c, col){
+  g.save(); g.translate(c.x,c.y); g.strokeStyle=col; g.globalAlpha=.6; g.lineWidth=7; g.beginPath(); c.trail.forEach((p,i)=>i?g.lineTo(p[0]-c.x,p[1]-c.y):g.moveTo(p[0]-c.x,p[1]-c.y)); g.stroke(); g.globalAlpha=1;
+  g.rotate(c.th); g.fillStyle='#11161d'; g.fillRect(-14,-48,28,12); g.fillRect(-14,36,28,12);
+  g.fillStyle=col; g.strokeStyle='#0b0f15'; g.lineWidth=2; g.fillRect(-55,-34,100,68); g.strokeRect(-55,-34,100,68);
+  g.fillStyle='#1e3a8a'; g.fillRect(64,-40,12,80);
+  for (let i=0;i<4;i++){ g.beginPath(); g.arc(70,-(1.5-i)*SP,6.5,0,7); g.fillStyle=c.bits[i]?'#ff3b30':'#f1f5f9'; g.fill(); }
+  if (c.frozen>0){ g.rotate(-c.th); g.fillStyle='#ff3b30'; g.font='700 40px Barlow Condensed, sans-serif'; g.textAlign='center'; g.fillText('LOST',0,-62); }
+  g.restore();
+}
+function render(){
+  g.setTransform(1,0,0,1,0,0); g.clearRect(0,0,view.width,view.height); g.setTransform(sc,0,0,sc,0,0);
+  g.drawImage(tc,0,0);
+  drawCar(ai,'#3fd7f2');
+  if (mode==='hard' && running){ g.fillStyle='rgba(11,15,21,.97)'; g.fillRect(0,0,WW,WH); g.fillStyle='#8a9bb1'; g.font='600 46px IBM Plex Mono, monospace'; g.textAlign='center';
+    g.fillText('LIGHTS OFF: you only have the 4 sensor lamps below', WW/2, WH/2); }
+  else drawCar(you,'#ffd23f');
+}
+/* input */
+const keys={l:false,r:false}; function upd(){ steer = keys.l&&!keys.r?-1: keys.r&&!keys.l?1:0; $('padL').classList.toggle('on',steer<0); $('padR').classList.toggle('on',steer>0); }
+addEventListener('keydown',e=>{ if(e.key==='ArrowLeft'||e.key==='a'){keys.l=true;upd();e.preventDefault();} if(e.key==='ArrowRight'||e.key==='d'){keys.r=true;upd();e.preventDefault();} });
+addEventListener('keyup',e=>{ if(e.key==='ArrowLeft'||e.key==='a'){keys.l=false;upd();} if(e.key==='ArrowRight'||e.key==='d'){keys.r=false;upd();} });
+for (const [id,k] of [['padL','l'],['padR','r']]){ const b=$(id);
+  b.addEventListener('pointerdown',e=>{keys[k]=true;upd();b.setPointerCapture(e.pointerId);}); const off=()=>{keys[k]=false;upd();};
+  b.addEventListener('pointerup',off); b.addEventListener('pointercancel',off); }
+function bestKey(){ return 'bta-best-'+mode; }
+function getBest(m){ try { return +localStorage.getItem('bta-best-'+m) || 0; } catch(e){ return 0; } }
+function showBest(){ $('best').textContent = `Your best: normal ${getBest('easy').toFixed(1)} laps · hard ${getBest('hard').toFixed(1)} laps`; }
+function start(m){ mode=m; place(you,0); place(ai,0); you.laps=you.fails=ai.laps=ai.fails=0; tLeft=60; running=true; $('ov').hidden=true; }
+$('easy').addEventListener('click',()=>start('easy')); $('hard').addEventListener('click',()=>start('hard'));
+function finish(){
+  running=false; const yv=you.laps+you.prog/L, av=ai.laps+ai.prog/L;
+  try { if (yv>getBest(mode)) localStorage.setItem(bestKey(), yv.toFixed(2)); } catch(e){}
+  $('ovT').textContent = yv>av ? 'You beat the network!' : 'The network wins';
+  $('ovP').textContent = `You: ${yv.toFixed(1)} laps, lost the line ${you.fails}×. AI: ${av.toFixed(1)} laps, lost ${ai.fails}×. `+
+    (mode==='hard' ? 'Now you know how little the car really sees: 4 lamps and 107 numbers.' : 'Try hard mode: drive with only the 4 sensor lamps, like the network does.');
+  $('ov').hidden=false; showBest();
+}
+place(you,0); place(ai,0); showBest();
+let last=performance.now(), acc=0;
+function frame(now){ const dt=Math.min(50,now-last); last=now;
+  if (running){ acc+=dt; let k=0; while(acc>=1&&k<200){ step(you); step(ai); acc-=1; k++; } tLeft-=dt/1000; if (tLeft<=0){ tLeft=0; finish(); } }
+  else { acc+=dt; let k=0; while(acc>=1&&k<200){ step(ai); acc-=1; k++; } }
+  $('timer').textContent=Math.ceil(tLeft); $('yl').textContent=you.laps; $('yf').textContent=you.fails; $('al').textContent=ai.laps; $('af').textContent=ai.fails;
+  for (let i=0;i<4;i++) $('l'+i).classList.toggle('on', !!you.bits[i]);
+  render(); requestAnimationFrame(frame); }
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
