@@ -1,5 +1,7 @@
 # AI line follower car
 
+**Live demo (3D car driven by the trained network): https://manishkshtriya.github.io/linefollower-ai/**
+
 A two-wheel car with a caster wheel in front. Four IR sensors look at the floor, a small neural network
 (4 inputs, two hidden layers of 7, 2 outputs) turns the sensor pattern into a left and a right motor speed.
 The whole network is 107 numbers (428 bytes), so it runs on an ESP32 and needs no Jetson.
@@ -37,7 +39,7 @@ These are simulation outputs only. The firmware has not been run on a real car y
 | `firmware/linefollower/linefollower.ino` | The car program: reads sensors, runs the network, drives the motors |
 | `firmware/linefollower/nn.h` | The network forward pass in C |
 | `firmware/linefollower/weights.h` | Trained weights (generated, replace after every training run) |
-| `docs/` | Simulation screenshots used in this README |
+| `docs/` | Project website (`index.html`, served by GitHub Pages) and simulation screenshots |
 | `tests/check.py` | Checks that the C code gives the same answers as the Python network |
 
 ## Hardware
