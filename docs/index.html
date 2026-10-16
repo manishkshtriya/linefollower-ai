@@ -182,8 +182,9 @@ footer a{color:var(--accent)}
 <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js" crossorigin="anonymous"></script>
 <script>if(!window.THREE){document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin="anonymous"><\/script>');}</script>
 <script>
-function showErr(m){var e=document.getElementById("err");if(e){e.hidden=false;e.textContent="The 3D view could not start: "+m+". Try another browser, or turn on hardware acceleration."}}
-window.addEventListener("error",function(ev){showErr(ev.message)});
+function showErr(m){var e=document.getElementById("err");if(e){e.hidden=false;e.textContent="The 3D view could not start: "+m+". Build 5. Try another browser, or turn on hardware acceleration."}}
+window.addEventListener("error",function(ev){showErr((ev.message||"error")+" ["+(ev.filename||"?").split("/").pop()+":"+ev.lineno+"] "+(ev.error&&ev.error.stack?ev.error.stack.split("\n").slice(0,3).join(" | "):""))});
+window.addEventListener("unhandledrejection",function(ev){showErr("promise: "+(ev.reason&&ev.reason.message||ev.reason))});
 (function(){
 if(!window.THREE){showErr("the 3D library did not load");return;}
 const NET = {"W": [[[-0.64361, 0.62476, -0.96239, 1.00675], [-0.08379, 0.61366, 0.53967, 1.52688], [0.08018, -1.34756, -0.0544, 0.02836], [0.40855, -0.10555, -1.01903, -0.5941], [-1.32457, -0.3806, -1.00059, -0.29121], [0.46194, 0.18022, 0.37132, 0.97443], [1.01632, 0.77425, -0.56859, -0.12905]], [[-0.20116, 1.25305, -0.33164, -0.03012, -0.38946, 0.90369, 0.77624], [1.2299, -0.03181, 0.4344, -0.84829, -0.11707, 0.0725, -0.18558], [0.84448, 0.33216, -0.2798, -0.16613, -0.29442, 0.59209, -0.51671], [0.70277, 0.50131, 1.149, -0.51029, 1.08459, -0.67185, -1.03984], [0.46614, 0.09759, 0.64227, 0.0786, 0.11427, -0.99369, -0.14068], [0.13288, 1.40918, -0.93017, -2.00334, 0.76727, 0.2414, 0.12723], [0.17058, -0.7498, -0.3113, 0.90278, -0.19591, -0.4851, 0.7518]], [[1.40134, 0.01833, 1.78229, 1.83653, 0.22284, -0.33953, -0.94201], [1.05844, -0.74125, -0.09615, -0.84488, -0.50882, -1.02473, 0.9863]]], "b": [[-0.36335, -0.12098, 0.23133, -0.10708, 0.52748, 0.14805, -0.24576], [0.28373, -0.45038, 0.20718, -0.34562, -0.30193, -0.21284, 0.38157], [0.33767, 0.41952]]};
@@ -270,7 +271,8 @@ function setStatus(bad){
 }
 
 /* ---- three.js scene ---- */
-const canvas=$('view');
+const canvas=$('view'); console.log('three r'+THREE.REVISION);
+try{var tg=document.createElement('canvas');if(!(tg.getContext('webgl2')||tg.getContext('webgl'))){showErr('WebGL is not available in this browser');return;}}catch(e0){}
 let renderer; try{renderer=new THREE.WebGLRenderer({canvas,antialias:true});}catch(e1){try{renderer=new THREE.WebGLRenderer({canvas,antialias:false});}catch(e2){showErr(e2.message||'WebGL is not available');return;}}
 renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -412,6 +414,7 @@ drawTrack(); floorTex.needsUpdate=true; spawn(); theme(); setCam('follow');
 tgt.set(car.x,6,car.y);
 let last=performance.now(), acc=0, hudT=0;
 function frame(now){
+ try{
   const dt=Math.min(0.05,(now-last)/1000); last=now;
   acc+=dt*speed; const h=1/120; let n=0;
   while(acc>=h && n<40){step(h);acc-=h;n++;}
@@ -426,6 +429,7 @@ function frame(now){
   applyCam(dt);
   hudT+=dt; if(hudT>0.05){hud();hudT=0;}
   renderer.render(scene,camera);
+ }catch(e){showErr('frame: '+(e&&e.stack?e.stack.split('\n').slice(0,3).join(' | '):e));return;}
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
