@@ -6,6 +6,28 @@ The whole network is 107 numbers (428 bytes), so it runs on an ESP32 and needs n
 
 The goal is to follow solid, dashed and dotted lines and to come back to the line when it drifts off.
 
+## Output (simulation)
+
+Screenshots from the browser simulator, running the trained network on the same sensor layout as the car.
+The red dots are the four sensors, the panels below the track show the live sensor reading, motor speeds, laps and lost-line count.
+These are simulation outputs only. The firmware has not been run on a real car yet.
+
+**Demo loop** (solid, dashed, solid, dotted, solid)
+
+![Demo loop](docs/track-demo.png)
+
+**Oval**
+
+![Oval](docs/track-oval.png)
+
+**Winding track**
+
+![Winding track](docs/track-winding.png)
+
+**Long gap (70 px, 189 mm) on dashed tape.** The car starts losing the line, which is the known limit.
+
+![Gap of 70 px](docs/gap-70px.png)
+
 ## What is in this folder
 
 | Path | What it does |
@@ -15,6 +37,7 @@ The goal is to follow solid, dashed and dotted lines and to come back to the lin
 | `firmware/linefollower/linefollower.ino` | The car program: reads sensors, runs the network, drives the motors |
 | `firmware/linefollower/nn.h` | The network forward pass in C |
 | `firmware/linefollower/weights.h` | Trained weights (generated, replace after every training run) |
+| `docs/` | Simulation screenshots used in this README |
 | `tests/check.py` | Checks that the C code gives the same answers as the Python network |
 
 ## Hardware
