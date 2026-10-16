@@ -2,7 +2,7 @@
 BE THE AI: the line follower game.
 
 You drive the AI line follower car against its own neural network (the 107 learned weights from this repository).
-Same car, same weak motor, same 4 IR sensors. Hard mode turns the lights off: you only see the 4 sensor lamps,
+Same car, same weak motor, same 4 IR sensors. Hard mode hides the track: you only see the 4 sensor lamps,
 which is everything the network ever sees.
 
 Run:   python3 line_follower_game.py
@@ -29,15 +29,15 @@ RACE_SECONDS = 60
 GAME_DIR = os.path.dirname(os.path.abspath(__file__))
 SAVE_FILE = os.path.join(os.path.expanduser("~"), ".be_the_ai_scores.json")
 
-INK = (238, 243, 249)
-MUTED = (138, 155, 177)
-BG = (11, 15, 21)
-PANEL = (20, 27, 37)
-LINE = (38, 50, 67)
-YOU = (255, 210, 63)
-AI = (63, 215, 242)
-RED = (255, 59, 48)
-GREEN = (74, 222, 128)
+INK = (14, 26, 43)
+MUTED = (83, 100, 125)
+BG = (245, 248, 252)
+PANEL = (255, 255, 255)
+LINE = (205, 215, 228)
+YOU = (232, 150, 0)
+AI = (10, 120, 180)
+RED = (225, 40, 35)
+GREEN = (26, 138, 90)
 FLOOR = (223, 229, 236)
 TAPE_COL = (10, 13, 18)
 
@@ -67,7 +67,7 @@ HOW_TO = [
                        "pulls you to the right. The AI has the same problem."),
     ("SCORING", "Each race lasts 60 seconds. Your score is the distance you drove in laps. Losing the line "
                 "costs you time while the car is put back. Beat the AI to get 3 stars."),
-    ("HARD MODE", "The lights go off. You only see the 4 lamps, exactly like the network. "
+    ("HARD MODE", "The track is hidden. You only see the 4 lamps, exactly like the network. "
                   "Most people find out how hard 4 bits really are."),
 ]
 
@@ -254,7 +254,7 @@ class Car:
         for wy in (-42, 42):
             pygame.draw.polygon(screen, (17, 22, 29), [to(-14, wy - 6), to(14, wy - 6), to(14, wy + 6), to(-14, wy + 6)])
         pygame.draw.polygon(screen, self.colour, [to(-55, -34), to(45, -34), to(45, 34), to(-55, 34)])
-        pygame.draw.polygon(screen, BG, [to(-55, -34), to(45, -34), to(45, 34), to(-55, 34)], 2)
+        pygame.draw.polygon(screen, INK, [to(-55, -34), to(45, -34), to(45, 34), to(-55, 34)], 2)
         pygame.draw.polygon(screen, (30, 58, 138), [to(64, -40), to(76, -40), to(76, 40), to(64, 40)])
         for i in range(4):
             pygame.draw.circle(screen, RED if self.bits[i] else (241, 245, 249), to(70, (1.5 - i) * SPACING * -1), 4)
@@ -356,7 +356,7 @@ class Game:
     def button(self, label, rect, hot):
         pygame.draw.rect(self.screen, YOU if hot else PANEL, rect, border_radius=10)
         pygame.draw.rect(self.screen, YOU if hot else LINE, rect, 2, border_radius=10)
-        self.text(label, self.f_mid, BG if hot else INK, rect.center, "center")
+        self.text(label, self.f_mid, (255, 255, 255) if hot else INK, rect.center, "center")
 
     # ---------- states
     def start_level(self, i):
@@ -514,7 +514,7 @@ class Game:
 
     def draw_menu(self):
         self.screen.blit(self.preview.surface, (OX, TOP)); self.preview_car.draw(self.screen)
-        shade = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA); shade.fill((11, 15, 21, 205)); self.screen.blit(shade, (0, 0))
+        shade = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA); shade.fill((245, 248, 252, 215)); self.screen.blit(shade, (0, 0))
         self.text("BE THE AI", self.f_big, INK, (SCREEN_W // 2, 110), "center")
         self.text("Drive the line follower against its own neural network", self.f, MUTED, (SCREEN_W // 2, 160), "center")
         self.menu_rects = []
@@ -541,7 +541,7 @@ class Game:
         scores = load_scores(); self.level_rects = []
         for i, lv in enumerate(LEVELS):
             r = pygame.Rect(80, 185 + i * 110, SCREEN_W - 160, 95); hot = i == self.level_i
-            pygame.draw.rect(self.screen, (32, 42, 56) if hot else PANEL, r, border_radius=12)
+            pygame.draw.rect(self.screen, (255, 244, 222) if hot else PANEL, r, border_radius=12)
             pygame.draw.rect(self.screen, YOU if hot else LINE, r, 2, border_radius=12)
             self.text(f"{i + 1}. {lv['name']}", self.f_mid, INK, (r.x + 24, r.y + 14))
             self.text(lv["tip"], self.f, MUTED, (r.x + 24, r.y + 56))
@@ -565,10 +565,10 @@ class Game:
             self.you.draw(self.screen)
         self.ai.draw(self.screen)
         if self.hard and self.countdown <= 0:
-            pygame.draw.rect(self.screen, BG, (0, TOP, SCREEN_W, SCREEN_H - TOP))
-            self.text("LIGHTS OFF: only the 4 sensor lamps", self.f_mid, MUTED, (SCREEN_W // 2, TOP + 120), "center")
+            pygame.draw.rect(self.screen, (228, 234, 242), (0, TOP, SCREEN_W, SCREEN_H - TOP))
+            self.text("TRACK HIDDEN: only the 4 sensor lamps", self.f_mid, MUTED, (SCREEN_W // 2, TOP + 120), "center")
         # score bar
-        pygame.draw.rect(self.screen, PANEL, (0, 0, SCREEN_W, TOP))
+        pygame.draw.rect(self.screen, PANEL, (0, 0, SCREEN_W, TOP)); pygame.draw.line(self.screen, LINE, (0, TOP - 1), (SCREEN_W, TOP - 1), 2)
         lv = LEVELS[self.level_i]
         self.text(f"{self.level_i + 1}. {lv['name']}", self.f_mid, INK, (20, 14))
         if not self.watch:
@@ -586,9 +586,9 @@ class Game:
         pygame.draw.rect(self.screen, PANEL, pad, border_radius=16); pygame.draw.rect(self.screen, LINE, pad, 2, border_radius=16)
         for i in range(4):
             cx = pad.x + 20 + size + i * size * 2
-            pygame.draw.circle(self.screen, RED if car.bits[i] else (42, 53, 70), (cx, pad.centery), size - 6)
+            pygame.draw.circle(self.screen, RED if car.bits[i] else (214, 222, 232), (cx, pad.centery), size - 6)
             if car.bits[i]:
-                pygame.draw.circle(self.screen, (255, 140, 130), (cx, pad.centery), size - 6, 3)
+                pygame.draw.circle(self.screen, (150, 20, 15), (cx, pad.centery), size - 6, 3)
         if self.watch:
             self.text(f"network output  L {self.ai.out[0]:.2f}   R {self.ai.out[1]:.2f}", self.f, AI, (pad.x - 16, pad.centery - 12), "topright")
         if self.countdown > 0:
@@ -596,7 +596,7 @@ class Game:
             self.text(str(c) if c > 0 else "GO", self.f_big, RED, (SCREEN_W // 2, SCREEN_H // 2 - 60), "center")
             self.text(lv["tip"], self.f, INK, (SCREEN_W // 2, SCREEN_H // 2 + 10), "center")
         if self.paused:
-            shade = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA); shade.fill((11, 15, 21, 200)); self.screen.blit(shade, (0, 0))
+            shade = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA); shade.fill((245, 248, 252, 215)); self.screen.blit(shade, (0, 0))
             self.text("PAUSED", self.f_big, INK, (SCREEN_W // 2, SCREEN_H // 2 - 30), "center")
             self.text("P to resume · Q to quit to menu", self.f, MUTED, (SCREEN_W // 2, SCREEN_H // 2 + 30), "center")
 

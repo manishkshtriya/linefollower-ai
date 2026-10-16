@@ -1,7 +1,7 @@
 # Be the AI: the line follower game
 
 A desktop game. You drive the AI line follower car against its own neural network, the 107 weights that live in
-`training/weights.json`. Same car, same 4 IR sensors, same weak motor. Hard mode turns the lights off, so you only
+`training/weights.json`. Same car, same 4 IR sensors, same weak motor. Hard mode hides the track, so you only
 see the 4 sensor lamps, which is everything the network ever sees.
 
 ## Install and run (Mac)
@@ -51,7 +51,7 @@ Best scores are saved on your computer in `~/.be_the_ai_scores.json`.
 ## Modes
 
 - **Race the AI**: you (yellow) against the network (blue), both visible.
-- **Hard mode: sensors only**: the screen goes dark; you get 4 big lamps. This is how the network drives.
+- **Hard mode: sensors only**: the track is hidden; you get 4 big lamps. This is how the network drives.
 - **Watch the AI drive**: only the network drives; its live output (left and right motor) is shown.
 
 ## Tracks
