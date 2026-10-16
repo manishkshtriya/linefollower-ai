@@ -31,6 +31,8 @@ Options: `--track mixed|solid|dashed|dotted`, `--gap <mm>`, `--spacing <mm>`, `-
 
 ## What it found
 
+(The tables below were made with the first, rule-copying weights. The learned weights in `learn/` do better; see `learn/README.md`.)
+
 **Sensor spacing matters more than anything else.** With 19 mm tape and sensors 30 mm apart, a centred line
 falls in the gap between the middle two sensors, so the car often reads `0000` even while it is on the line.
 On dashed and dotted tape it then misses marks, and any difference between the two motors makes it drift off.

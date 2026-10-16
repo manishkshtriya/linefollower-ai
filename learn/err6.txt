@@ -1,0 +1,1 @@
+best validation fitness 0.9040 saved to learned6.txt
