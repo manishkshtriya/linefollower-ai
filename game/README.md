@@ -39,10 +39,11 @@ Shortcut: after step 2 you can double-click `game/play.command` in Finder. If ma
 | **Goal** | Drive further than the AI in 60 seconds. |
 | **Steer** | Hold **←** / **→** (or **A** / **D**). Let go to drive straight. |
 | **Pause** | **P** or **ESC**. While paused, **Q** goes back to the menu. |
+| **Camera** | **C** switches between the chase camera and the whole track. |
 | **Menus** | Arrow keys and **ENTER**, or click with the mouse. |
 | **Race again** | **R** on the results screen. |
 
-**The sensor lamps** (bottom-right) are your car's 4 IR sensors, left to right. Red means that sensor is over tape.
+**The sensor lamps** (right panel, under the minimap) are your car's 4 IR sensors, left to right. Red means that sensor is over tape.
 Line under the left lamps: steer left. Under the right lamps: steer right.
 
 **Gaps.** On dashed and dotted tape all 4 lamps go dark between marks. Keep going and you will reach the next mark.
@@ -51,6 +52,10 @@ The car is put back after a short pause, which costs you distance.
 
 **Weak motor.** From level 2 the right motor is weaker (4 to 8%), so "straight" pulls you to the right. The AI has
 the same problem.
+
+**Points and streak.** You score points for distance. Every 5 seconds on the line raises your multiplier by 0.5, up to x3. Losing the line resets it.
+
+**The AI's brain.** The right panel shows the network live: 4 inputs, two layers of 7, 2 outputs. Blue lines push a neuron up, orange push it down.
 
 **Stars.** 3 stars: you beat the AI. 2 stars: within 75% of it. 1 star: you finished.
 Best scores are saved on your computer in `~/.be_the_ai_scores.json`.
