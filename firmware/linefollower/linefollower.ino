@@ -1,6 +1,7 @@
 // AI line follower car: 4 IR sensors -> small neural network -> 2 motors.
 // Board: ESP32 DevKit (Arduino core 3.x). Motor driver: TB6612FNG.
 // Not yet tested on a real car. Start with the wheels off the ground and tune the values below.
+// Mount the four sensors about 20 mm apart (centre to centre) for 19 mm tape. The simulator in sim/ shows why.
 
 #include "nn.h"
 
@@ -16,7 +17,7 @@ const bool LEFT_REVERSED = false;   // set true if the left wheel turns backward
 const bool RIGHT_REVERSED = false;  // set true if the right wheel turns backwards
 const int  MIN_DUTY = 70;           // lowest PWM (0-255) that makes your motors turn
 const int  MAX_DUTY = 255;
-const unsigned long LOST_STOP_MS = 1500;  // stop if no sensor sees the line for this long
+const unsigned long LOST_STOP_MS = 3000;  // stop if no sensor sees the line for this long
 const unsigned long LOOP_MS = 5;          // 200 control steps per second
 const bool DEBUG = true;
 

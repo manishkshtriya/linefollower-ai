@@ -2,6 +2,10 @@
 
 **Live demo (3D car driven by the trained network): https://manishkshtriya.github.io/linefollower-ai/**
 
+**Simulation video (the real firmware driving a virtual car):** [`sim/line_follower_sim.mp4`](sim/line_follower_sim.mp4)
+
+![Simulation preview](sim/preview.gif)
+
 A two-wheel car with a caster wheel in front. Four IR sensors look at the floor, a small neural network
 (4 inputs, two hidden layers of 7, 2 outputs) turns the sensor pattern into a left and a right motor speed.
 The whole network is 107 numbers (428 bytes), so it runs on an ESP32 and needs no Jetson.
@@ -40,12 +44,13 @@ These are simulation outputs only. The firmware has not been run on a real car y
 | `firmware/linefollower/nn.h` | The network forward pass in C |
 | `firmware/linefollower/weights.h` | Trained weights (generated, replace after every training run) |
 | `docs/` | Project website (`index.html`, served by GitHub Pages) and simulation screenshots |
+| `sim/` | Firmware-in-the-loop simulator: runs `linefollower.ino` unchanged against a virtual car. See `sim/README.md` |
 | `tests/check.py` | Checks that the C code gives the same answers as the Python network |
 
 ## Hardware
 
 - ESP32 DevKit board (Arduino-ESP32 core 3.x)
-- 4 IR reflective sensor modules (TCRT5000 type) or one 4-channel array
+- 4 IR reflective sensor modules (TCRT5000 type) or one 4-channel array, mounted **about 20 mm apart** (centre to centre) for 19 mm tape
 - TB6612FNG motor driver
 - 2 geared DC motors with wheels, 1 caster wheel, chassis
 - Battery pack for the motors, 5 V supply (power bank or regulator) for the ESP32
@@ -74,6 +79,15 @@ Motor battery goes to TB6612 VM. Left motor on output A, right motor on output B
 4. **Flash** `linefollower.ino` with the wheels off the ground first. If a wheel turns the wrong way, set
    `LEFT_REVERSED` or `RIGHT_REVERSED` to `true`. Raise `MIN_DUTY` if the motors do not start at low speed.
 5. **Test on the floor**, starting with a solid line, then dashed, then dotted.
+
+## Firmware-in-the-loop simulation
+
+`sim/hil_sim.cpp` compiles the real `linefollower.ino` on a PC and connects its pins to a virtual car with motor
+stall, motor lag, sensor spot size, weak-motor and noise faults. It found that **sensor spacing is the most
+important build choice**: with 19 mm tape, sensors 20 mm apart passed 11 of 12 hard scenarios, and sensors 30 mm
+apart passed only 5. With 20 mm spacing the car ran clean on solid, dashed and dotted tape, with an 8% weaker motor,
+with 3% wrong sensor reads and with gaps up to 135 mm. Gaps of 189 mm still lose the line. Details and commands are in
+[`sim/README.md`](sim/README.md).
 
 ## Training on the real car (recommended)
 

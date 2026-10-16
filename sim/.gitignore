@@ -1,0 +1,8 @@
+hil_sim
+hil_sim_*
+*.csv
+*.pgm
+*.jsonl
+*.log
+f_*.png
+frames.png
