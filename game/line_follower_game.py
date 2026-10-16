@@ -338,6 +338,8 @@ class Game:
         self.selftest = selftest
         self.state = "menu"; self.menu_i = 0; self.level_i = 0; self.hard = False; self.watch = False
         self.drawn = None; self.draw_buf = []; self.howto_page = 0
+        self.menu_rects, self.level_rects = [], []          # filled when each screen is drawn
+        self.again_rect = self.menu_rect = pygame.Rect(0, 0, 0, 0)
         self.preview = Track(shape_points("wind"), "mixed"); self.preview_car = Car(self.preview, AI, self.brain, 0.94)
 
     # ---------- helpers
