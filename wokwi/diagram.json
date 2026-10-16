@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "author": "Manish",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-slide-switch", "id": "s1", "top": -120, "left": -150, "attrs": { "label": "S1 far left" } },
+    { "type": "wokwi-slide-switch", "id": "s2", "top": -120, "left": -80, "attrs": { "label": "S2" } },
+    { "type": "wokwi-slide-switch", "id": "s3", "top": -120, "left": -10, "attrs": { "label": "S3" } },
+    { "type": "wokwi-slide-switch", "id": "s4", "top": -120, "left": 60, "attrs": { "label": "S4 far right" } },
+    { "type": "wokwi-resistor", "id": "r1", "top": 140, "left": 200, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "r2", "top": 200, "left": 200, "attrs": { "value": "220" } },
+    { "type": "wokwi-led", "id": "ledL", "top": 100, "left": 300, "attrs": { "color": "red", "label": "Left motor" } },
+    { "type": "wokwi-led", "id": "ledR", "top": 160, "left": 300, "attrs": { "color": "green", "label": "Right motor" } }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "s1:2", "esp:34", "orange", [] ], [ "s1:1", "esp:GND.1", "black", [] ], [ "s1:3", "esp:3V3", "red", [] ],
+    [ "s2:2", "esp:35", "orange", [] ], [ "s2:1", "esp:GND.1", "black", [] ], [ "s2:3", "esp:3V3", "red", [] ],
+    [ "s3:2", "esp:32", "orange", [] ], [ "s3:1", "esp:GND.1", "black", [] ], [ "s3:3", "esp:3V3", "red", [] ],
+    [ "s4:2", "esp:33", "orange", [] ], [ "s4:1", "esp:GND.1", "black", [] ], [ "s4:3", "esp:3V3", "red", [] ],
+    [ "esp:25", "r1:1", "blue", [] ], [ "r1:2", "ledL:A", "blue", [] ], [ "ledL:C", "esp:GND.2", "black", [] ],
+    [ "esp:4", "r2:1", "green", [] ], [ "r2:2", "ledR:A", "green", [] ], [ "ledR:C", "esp:GND.2", "black", [] ]
+  ],
+  "dependencies": {}
+}

@@ -45,6 +45,7 @@ These are simulation outputs only. The firmware has not been run on a real car y
 | `firmware/linefollower/weights.h` | Trained weights (generated, replace after every training run) |
 | `docs/` | Project website (`index.html`, served by GitHub Pages) and simulation screenshots |
 | `sim/` | Firmware-in-the-loop simulator: runs `linefollower.ino` unchanged against a virtual car. See `sim/README.md` |
+| `wokwi/` | Ready-made Wokwi ESP32 circuit: run the real firmware in the browser with switches as sensors |
 | `tests/check.py` | Checks that the C code gives the same answers as the Python network |
 
 ## Hardware
