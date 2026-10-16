@@ -179,8 +179,8 @@ footer a{color:var(--accent)}
   <footer>Code, wiring and training script: <a href="https://github.com/manishkshtriya/linefollower-ai" target="_blank" rel="noopener">github.com/manishkshtriya/linefollower-ai</a></footer>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>if(!window.THREE){document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>');}</script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js" crossorigin="anonymous"></script>
+<script>if(!window.THREE){document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin="anonymous"><\/script>');}</script>
 <script>
 function showErr(m){var e=document.getElementById("err");if(e){e.hidden=false;e.textContent="The 3D view could not start: "+m+". Try another browser, or turn on hardware acceleration."}}
 window.addEventListener("error",function(ev){showErr(ev.message)});
@@ -271,7 +271,7 @@ function setStatus(bad){
 
 /* ---- three.js scene ---- */
 const canvas=$('view');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+let renderer; try{renderer=new THREE.WebGLRenderer({canvas,antialias:true});}catch(e1){try{renderer=new THREE.WebGLRenderer({canvas,antialias:false});}catch(e2){showErr(e2.message||'WebGL is not available');return;}}
 renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 const scene=new THREE.Scene();
